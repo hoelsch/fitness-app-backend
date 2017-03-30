@@ -13,5 +13,10 @@
     "sequelize": "^3.30.3",
     "sequelize-cli": "^2.7.0",
     "sqlite3": "^3.1.8"
+  },
+  "devDependencies": {
+    "eslint": "^3.18.0",
+    "eslint-config-airbnb-base": "^11.1.2",
+    "eslint-plugin-import": "^2.2.0"
   }
 }
