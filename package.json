@@ -1,9 +1,10 @@
-{
+hi{
   "name": "gymgang",
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node --use-strict ./bin/www"
+    "start": "node ./bin/www",
+    "test": "export NODE_ENV=test && mocha"
   },
   "dependencies": {
     "body-parser": "~1.15.2",
@@ -15,8 +16,11 @@
     "sqlite3": "^3.1.8"
   },
   "devDependencies": {
+    "chai": "^3.5.0",
+    "chai-http": "^3.0.0",
     "eslint": "^3.18.0",
     "eslint-config-airbnb-base": "^11.1.2",
-    "eslint-plugin-import": "^2.2.0"
+    "eslint-plugin-import": "^2.2.0",
+    "mocha": "^3.2.0"
   }
 }
