@@ -58,4 +58,22 @@ describe('ExerciseType', function() {
       });
     });
   });
+
+  describe('POST /exercise-types', function() {
+    it('should add an exercise-type', function(done) {
+      chai.request(server)
+        .post('/exercise-types')
+        .send({ name: 'Test' })
+        .end((err, res) => {
+          res.should.have.status(200);
+          res.should.be.json;
+          res.body.should.be.a('object');
+          res.body.should.have.property('id');
+          res.body.should.have.property('name');
+          res.body.should.have.property('createdAt');
+          res.body.should.have.property('updatedAt');
+          done();
+        });
+    });
+  });
 });
