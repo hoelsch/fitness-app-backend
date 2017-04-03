@@ -9,14 +9,13 @@ chai.use(chaiHttp);
 describe('ExerciseType', function() {
   beforeEach(function(done) {
     ExerciseType.destroy({ where: {} }).then(function() {
-      done()
+      done();
     });
   });
 
   describe('GET /exercise-types', function() {
-    it('should list ALL exercise-types', function(done) {
-      const exerciseType = { name: 'Test' };
-      ExerciseType.create(exerciseType).then(function() {
+    it('should list all exercise-types', function(done) {
+      ExerciseType.create({ name: 'Test' }).then(function(newExerciseType) {
         chai.request(server)
         .get('/exercise-types')
         .end((err, res) => {
@@ -29,7 +28,8 @@ describe('ExerciseType', function() {
           res.body.exerciseType[0].should.have.property('name');
           res.body.exerciseType[0].should.have.property('createdAt');
           res.body.exerciseType[0].should.have.property('updatedAt');
-          res.body.exerciseType[0].should.have.property('name').eql('Test');
+          res.body.exerciseType[0].should.have.property('id').eql(newExerciseType.id);
+          res.body.exerciseType[0].should.have.property('name').eql(newExerciseType.name);
           done();
         });
       });
