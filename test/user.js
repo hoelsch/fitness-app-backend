@@ -55,10 +55,10 @@ describe('User', function() {
         });
     });
   });
-  /*
+
   describe('PATCH /users/:id', function() {
-    it('should update exercise-type with a given id', function(done) {
-      user.create({ name: 'Test' }).then(function(newUser) {
+    it('should update user with a given id', function(done) {
+      User.create({ name: 'Test' }).then(function(newUser) {
         chai.request(server)
           .patch(`/users/${newUser.id}`)
           .send({ name: 'Updated' })
@@ -79,8 +79,8 @@ describe('User', function() {
   });
 
   describe('DELETE /users/:id', function() {
-    it('should delete exercise-type with a given id', function(done) {
-      user.create({ name: 'Test' }).then(function(newUser) {
+    it('should delete user with a given id', function(done) {
+      User.create({ name: 'Test' }).then(function(newUser) {
         chai.request(server)
           .delete(`/users/${newUser.id}`)
           .end((err, res) => {
@@ -89,5 +89,5 @@ describe('User', function() {
           });
       });
     });
-  });*/
+  });
 });
