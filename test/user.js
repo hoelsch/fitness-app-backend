@@ -15,9 +15,9 @@ describe('User', function() {
 
   describe('GET /users/:id', function() {
     it('should get an user with a given id', function(done) {
-      User.create({ name: 'Test' }).then(function(newUser) {
+      User.create({ name: 'Test' }).then(function(user) {
         chai.request(server)
-          .get(`/users/${newUser.id}`)
+          .get(`/users/${user.id}`)
           .end((err, res) => {
             res.should.have.status(200);
             res.should.be.json;
@@ -28,8 +28,8 @@ describe('User', function() {
             res.body.user.should.have.property('name');
             res.body.user.should.have.property('createdAt');
             res.body.user.should.have.property('updatedAt');
-            res.body.user.id.should.equal(newUser.id);
-            res.body.user.name.should.equal(newUser.name);
+            res.body.user.id.should.equal(user.id);
+            res.body.user.name.should.equal(user.name);
             done();
           });
       });
@@ -58,9 +58,9 @@ describe('User', function() {
 
   describe('PATCH /users/:id', function() {
     it('should update user with a given id', function(done) {
-      User.create({ name: 'Test' }).then(function(newUser) {
+      User.create({ name: 'Test' }).then(function(user) {
         chai.request(server)
-          .patch(`/users/${newUser.id}`)
+          .patch(`/users/${user.id}`)
           .send({ name: 'Updated' })
           .end((err, res) => {
             res.should.have.status(200);
@@ -70,7 +70,7 @@ describe('User', function() {
             res.body.should.have.property('name');
             res.body.should.have.property('createdAt');
             res.body.should.have.property('updatedAt');
-            res.body.id.should.equal(newUser.id);
+            res.body.id.should.equal(user.id);
             res.body.name.should.equal('Updated');
             done();
           });
@@ -80,9 +80,9 @@ describe('User', function() {
 
   describe('DELETE /users/:id', function() {
     it('should delete user with a given id', function(done) {
-      User.create({ name: 'Test' }).then(function(newUser) {
+      User.create({ name: 'Test' }).then(function(user) {
         chai.request(server)
-          .delete(`/users/${newUser.id}`)
+          .delete(`/users/${user.id}`)
           .end((err, res) => {
             res.should.have.status(200);
             done();

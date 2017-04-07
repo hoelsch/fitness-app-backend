@@ -15,7 +15,7 @@ describe('ExerciseType', function() {
 
   describe('GET /exercise-types', function() {
     it('should list all exercise-types', function(done) {
-      ExerciseType.create({ name: 'Test' }).then(function(newExerciseType) {
+      ExerciseType.create({ name: 'Test' }).then(function(exerciseType) {
         chai.request(server)
           .get('/exercise-types')
           .end((err, res) => {
@@ -28,8 +28,8 @@ describe('ExerciseType', function() {
             res.body.exerciseType[0].should.have.property('name');
             res.body.exerciseType[0].should.have.property('createdAt');
             res.body.exerciseType[0].should.have.property('updatedAt');
-            res.body.exerciseType[0].id.should.equal(newExerciseType.id);
-            res.body.exerciseType[0].name.should.equal(newExerciseType.name);
+            res.body.exerciseType[0].id.should.equal(exerciseType.id);
+            res.body.exerciseType[0].name.should.equal(exerciseType.name);
             done();
           });
       });
@@ -38,9 +38,9 @@ describe('ExerciseType', function() {
 
   describe('GET /exercise-types/:id', function() {
     it('should get an exercise type with a given id', function(done) {
-      ExerciseType.create({ name: 'Test' }).then(function(newExerciseType) {
+      ExerciseType.create({ name: 'Test' }).then(function(exerciseType) {
         chai.request(server)
-          .get(`/exercise-types/${newExerciseType.id}`)
+          .get(`/exercise-types/${exerciseType.id}`)
           .end((err, res) => {
             res.should.have.status(200);
             res.should.be.json;
@@ -51,8 +51,8 @@ describe('ExerciseType', function() {
             res.body.exerciseType.should.have.property('name');
             res.body.exerciseType.should.have.property('createdAt');
             res.body.exerciseType.should.have.property('updatedAt');
-            res.body.exerciseType.id.should.equal(newExerciseType.id);
-            res.body.exerciseType.name.should.equal(newExerciseType.name);
+            res.body.exerciseType.id.should.equal(exerciseType.id);
+            res.body.exerciseType.name.should.equal(exerciseType.name);
             done();
           });
       });
@@ -81,9 +81,9 @@ describe('ExerciseType', function() {
 
   describe('PATCH /exercise-types/:id', function() {
     it('should update exercise-type with a given id', function(done) {
-      ExerciseType.create({ name: 'Test' }).then(function(newExerciseType) {
+      ExerciseType.create({ name: 'Test' }).then(function(exerciseType) {
         chai.request(server)
-          .patch(`/exercise-types/${newExerciseType.id}`)
+          .patch(`/exercise-types/${exerciseType.id}`)
           .send({ name: 'Updated' })
           .end((err, res) => {
             res.should.have.status(200);
@@ -93,7 +93,7 @@ describe('ExerciseType', function() {
             res.body.should.have.property('name');
             res.body.should.have.property('createdAt');
             res.body.should.have.property('updatedAt');
-            res.body.id.should.equal(newExerciseType.id);
+            res.body.id.should.equal(exerciseType.id);
             res.body.name.should.equal('Updated');
             done();
           });
@@ -103,9 +103,9 @@ describe('ExerciseType', function() {
 
   describe('DELETE /exercise-types/:id', function() {
     it('should delete exercise-type with a given id', function(done) {
-      ExerciseType.create({ name: 'Test' }).then(function(newExerciseType) {
+      ExerciseType.create({ name: 'Test' }).then(function(exerciseType) {
         chai.request(server)
-          .delete(`/exercise-types/${newExerciseType.id}`)
+          .delete(`/exercise-types/${exerciseType.id}`)
           .end((err, res) => {
             res.should.have.status(200);
             done();
