@@ -15,7 +15,7 @@ describe('ExerciseType', function() {
 
   describe('GET /exercise-types', function() {
     it('should list all exercise-types', function(done) {
-      ExerciseType.create({ name: 'Test' }).then(function(exerciseType) {
+      ExerciseType.create({ name: 'ExerciseType' }).then(function(exerciseType) {
         chai.request(server)
           .get('/exercise-types')
           .end((err, res) => {
@@ -38,7 +38,7 @@ describe('ExerciseType', function() {
 
   describe('GET /exercise-types/:id', function() {
     it('should get an exercise type with a given id', function(done) {
-      ExerciseType.create({ name: 'Test' }).then(function(exerciseType) {
+      ExerciseType.create({ name: 'ExerciseType' }).then(function(exerciseType) {
         chai.request(server)
           .get(`/exercise-types/${exerciseType.id}`)
           .end((err, res) => {
@@ -61,7 +61,7 @@ describe('ExerciseType', function() {
 
   describe('POST /exercise-types', function() {
     it('should add an exercise-type', function(done) {
-      const exerciseType = { name: 'Test' };
+      const exerciseType = { name: 'ExerciseType' };
       chai.request(server)
         .post('/exercise-types')
         .send(exerciseType)
@@ -81,7 +81,7 @@ describe('ExerciseType', function() {
 
   describe('PATCH /exercise-types/:id', function() {
     it('should update exercise-type with a given id', function(done) {
-      ExerciseType.create({ name: 'Test' }).then(function(exerciseType) {
+      ExerciseType.create({ name: 'ExerciseType' }).then(function(exerciseType) {
         chai.request(server)
           .patch(`/exercise-types/${exerciseType.id}`)
           .send({ name: 'Updated' })
@@ -103,7 +103,7 @@ describe('ExerciseType', function() {
 
   describe('DELETE /exercise-types/:id', function() {
     it('should delete exercise-type with a given id', function(done) {
-      ExerciseType.create({ name: 'Test' }).then(function(exerciseType) {
+      ExerciseType.create({ name: 'ExerciseType' }).then(function(exerciseType) {
         chai.request(server)
           .delete(`/exercise-types/${exerciseType.id}`)
           .end((err, res) => {

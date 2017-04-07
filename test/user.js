@@ -16,7 +16,7 @@ describe('User', function() {
 
   describe('GET /users/:id', function() {
     it('should get an user with a given id', function(done) {
-      User.create({ name: 'Test' }).then(function(user) {
+      User.create({ name: 'User' }).then(function(user) {
         chai.request(server)
           .get(`/users/${user.id}`)
           .end((err, res) => {
@@ -39,7 +39,7 @@ describe('User', function() {
 
   describe('POST /users', function() {
     it('should add an user', function(done) {
-      const user = { name: 'Test' };
+      const user = { name: 'User' };
       chai.request(server)
         .post('/users')
         .send(user)
@@ -59,7 +59,7 @@ describe('User', function() {
 
   describe('PATCH /users/:id', function() {
     it('should update user with a given id', function(done) {
-      User.create({ name: 'Test' }).then(function(user) {
+      User.create({ name: 'User' }).then(function(user) {
         chai.request(server)
           .patch(`/users/${user.id}`)
           .send({ name: 'Updated' })
@@ -81,7 +81,7 @@ describe('User', function() {
 
   describe('DELETE /users/:id', function() {
     it('should delete user with a given id', function(done) {
-      User.create({ name: 'Test' }).then(function(user) {
+      User.create({ name: 'User' }).then(function(user) {
         chai.request(server)
           .delete(`/users/${user.id}`)
           .end((err, res) => {
