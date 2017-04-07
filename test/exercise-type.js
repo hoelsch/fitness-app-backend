@@ -81,9 +81,9 @@ describe('ExerciseType', function() {
 
   describe('PATCH /exercise-types/:id', function() {
     it('should update exercise-type with a given id', function(done) {
-      ExerciseType.create({ name: 'Test' }).then(function(exerciseType) {
+      ExerciseType.create({ name: 'Test' }).then(function(newExerciseType) {
         chai.request(server)
-          .patch(`/exercise-types/${exerciseType.id}`)
+          .patch(`/exercise-types/${newExerciseType.id}`)
           .send({ name: 'Updated' })
           .end((err, res) => {
             res.should.have.status(200);
@@ -93,7 +93,7 @@ describe('ExerciseType', function() {
             res.body.should.have.property('name');
             res.body.should.have.property('createdAt');
             res.body.should.have.property('updatedAt');
-            res.body.id.should.equal(exerciseType.id);
+            res.body.id.should.equal(newExerciseType.id);
             res.body.name.should.equal('Updated');
             done();
           });
