@@ -1,12 +1,19 @@
 const chai = require('chai');
 const chaiHttp = require('chai-http');
-const server = require('../app');
+const server = require('../bin/www');
 const should = chai.should();
 const ExerciseType = require('../models').ExerciseType;
 
 chai.use(chaiHttp);
 
 describe('ExerciseType', function() {
+  before(function(done) {
+    // if exercise-types table does not exist, this statement will create it
+    ExerciseType.create({ name : 'Initial' }).then(function() {
+      done();
+    });
+  });
+
   beforeEach(function(done) {
     ExerciseType.destroy({ where: {} }).then(function() {
       done();
@@ -28,8 +35,8 @@ describe('ExerciseType', function() {
             res.body.exerciseType[0].should.have.property('name');
             res.body.exerciseType[0].should.have.property('createdAt');
             res.body.exerciseType[0].should.have.property('updatedAt');
-            res.body.exerciseType[0].should.have.property('id').eql(newExerciseType.id);
-            res.body.exerciseType[0].should.have.property('name').eql(newExerciseType.name);
+            res.body.exerciseType[0].id.should.equal(newExerciseType.id);
+            res.body.exerciseType[0].name.should.equal(newExerciseType.name);
             done();
           });
       });
@@ -51,8 +58,8 @@ describe('ExerciseType', function() {
             res.body.exerciseType.should.have.property('name');
             res.body.exerciseType.should.have.property('createdAt');
             res.body.exerciseType.should.have.property('updatedAt');
-            res.body.exerciseType.should.have.property('id').eql(newExerciseType.id);
-            res.body.exerciseType.should.have.property('name').eql(newExerciseType.name);
+            res.body.exerciseType.id.should.equal(newExerciseType.id);
+            res.body.exerciseType.name.should.equal(newExerciseType.name);
             done();
           });
       });
@@ -61,9 +68,10 @@ describe('ExerciseType', function() {
 
   describe('POST /exercise-types', function() {
     it('should add an exercise-type', function(done) {
+      const exerciseType = { name: 'Test' };
       chai.request(server)
         .post('/exercise-types')
-        .send({ name: 'Test' })
+        .send(exerciseType)
         .end((err, res) => {
           res.should.have.status(200);
           res.should.be.json;
@@ -72,7 +80,34 @@ describe('ExerciseType', function() {
           res.body.should.have.property('name');
           res.body.should.have.property('createdAt');
           res.body.should.have.property('updatedAt');
+          res.body.name.should.equal(exerciseType.name);
           done();
+        });
+    });
+  });
+
+  describe('PATCH /exercise-types/:id', function() {
+    it('should update exercise-type with a given id', function(done) {
+      ExerciseType.create({ name: 'Test' })
+        .then(function(newExerciseType) {
+          return ExerciseType.find({ where: { id: newExerciseType.id } });
+        })
+        .then(function(storedExerciseType) {
+          chai.request(server)
+            .patch(`/exercise-types/${storedExerciseType.id}`)
+            .send({ name: 'Updated' })
+            .end((err, res) => {
+              res.should.have.status(200);
+              res.should.be.json;
+              res.body.should.be.a('object');
+              res.body.should.have.property('id');
+              res.body.should.have.property('name');
+              res.body.should.have.property('createdAt');
+              res.body.should.have.property('updatedAt');
+              res.body.id.should.equal(storedExerciseType.id);
+              res.body.name.should.equal('Updated');
+              done();
+            });
         });
     });
   });
