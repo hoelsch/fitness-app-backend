@@ -22,7 +22,7 @@ router.post('/', (req, res) => (
 // update exercise type
 router.patch('/:id', (req, res) => (
   ExerciseType.find({ where: { id: req.params.id } }).then(exerciseType => (
-    exerciseType.update(req.body).then(() => res.sendStatus(200))
+    exerciseType.update(req.body).then(updatedExerciseType => res.json(updatedExerciseType))
   ))
 ));
 
