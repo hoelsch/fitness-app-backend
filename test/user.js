@@ -36,26 +36,26 @@ describe('User', function() {
     });
   });
 
-  /*describe('POST /users', function() {
-    it('should add an exercise-type', function(done) {
-      const exerciseType = { name: 'Test' };
+  describe('POST /users', function() {
+    it('should add an user', function(done) {
+      const user = { name: 'Test' };
       chai.request(server)
         .post('/users')
-        .send(exerciseType)
+        .send(user)
         .end((err, res) => {
           res.should.have.status(200);
           res.should.be.json;
-          res.body.should.be.a('object');
-          res.body.should.have.property('id');
-          res.body.should.have.property('name');
-          res.body.should.have.property('createdAt');
-          res.body.should.have.property('updatedAt');
-          res.body.name.should.equal(user.name);
+          res.body.user.should.be.a('object');
+          res.body.user.should.have.property('id');
+          res.body.user.should.have.property('name');
+          res.body.user.should.have.property('createdAt');
+          res.body.user.should.have.property('updatedAt');
+          res.body.user.name.should.equal(user.name);
           done();
         });
     });
   });
-
+  /*
   describe('PATCH /users/:id', function() {
     it('should update exercise-type with a given id', function(done) {
       user.create({ name: 'Test' }).then(function(newUser) {
