@@ -3,6 +3,7 @@ const chaiHttp = require('chai-http');
 const server = require('../bin/www');
 const should = chai.should();
 const User = require('../models').User;
+const Group = require('../models').Group;
 
 chai.use(chaiHttp);
 
@@ -88,6 +89,41 @@ describe('User', function() {
             done();
           });
       });
+    });
+  });
+
+  describe('GET /users/:id/groups', function() {
+    it('should get the groups of an user with a given id', function(done) {
+      let userId;
+      let groupId;
+      Promise.all([User.create({ name: 'User' }), Group.create({ name: 'Group' })])
+        .then((values) => {
+          const user = values[0];
+          const group = values[1];
+          userId = user.id;
+          groupId = group.id;
+          return group.addUser(userId);
+        })
+        .then(() => {
+          chai.request(server)
+            .get(`/users/${userId}/groups`)
+            .end((err, res) => {
+              res.should.have.status(200);
+              res.should.be.json;
+              res.body.should.be.a('array');
+              res.body[0].should.be.a('object');
+              res.body[0].should.have.property('id');
+              res.body[0].id.should.equal(groupId);
+              res.body[0].should.have.property('name');
+              res.body[0].should.have.property('createdAt');
+              res.body[0].should.have.property('updatedAt');
+              res.body[0].should.have.property('UserGroup');
+              res.body[0].UserGroup.should.be.a('object');
+              res.body[0].UserGroup.should.have.property('UserId');
+              res.body[0].UserGroup.UserId.should.equal(userId);
+              done();
+            });
+        });
     });
   });
 });
