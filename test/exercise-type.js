@@ -81,27 +81,23 @@ describe('ExerciseType', function() {
 
   describe('PATCH /exercise-types/:id', function() {
     it('should update exercise-type with a given id', function(done) {
-      ExerciseType.create({ name: 'Test' })
-        .then(function(newExerciseType) {
-          return ExerciseType.find({ where: { id: newExerciseType.id } });
-        })
-        .then(function(storedExerciseType) {
-          chai.request(server)
-            .patch(`/exercise-types/${storedExerciseType.id}`)
-            .send({ name: 'Updated' })
-            .end((err, res) => {
-              res.should.have.status(200);
-              res.should.be.json;
-              res.body.should.be.a('object');
-              res.body.should.have.property('id');
-              res.body.should.have.property('name');
-              res.body.should.have.property('createdAt');
-              res.body.should.have.property('updatedAt');
-              res.body.id.should.equal(storedExerciseType.id);
-              res.body.name.should.equal('Updated');
-              done();
-            });
-        });
+      ExerciseType.create({ name: 'Test' }).then(function(exerciseType) {
+        chai.request(server)
+          .patch(`/exercise-types/${exerciseType.id}`)
+          .send({ name: 'Updated' })
+          .end((err, res) => {
+            res.should.have.status(200);
+            res.should.be.json;
+            res.body.should.be.a('object');
+            res.body.should.have.property('id');
+            res.body.should.have.property('name');
+            res.body.should.have.property('createdAt');
+            res.body.should.have.property('updatedAt');
+            res.body.id.should.equal(exerciseType.id);
+            res.body.name.should.equal('Updated');
+            done();
+          });
+      });
     });
   });
 });
