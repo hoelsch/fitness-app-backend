@@ -7,14 +7,7 @@ const ExerciseType = require('../models').ExerciseType;
 chai.use(chaiHttp);
 
 describe('ExerciseType', function() {
-  before(function(done) {
-    // if exercise-types table does not exist, this statement will create it
-    ExerciseType.create({ name : 'Initial' }).then(function() {
-      done();
-    });
-  });
-
-  beforeEach(function(done) {
+  afterEach(function(done) {
     ExerciseType.destroy({ where: {} }).then(function() {
       done();
     });
