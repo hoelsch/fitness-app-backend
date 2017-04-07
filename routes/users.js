@@ -16,7 +16,7 @@ router.post('/', (req, res) => (
 // update user
 router.patch('/:id', (req, res) => (
   User.find({ where: { id: req.params.id } }).then(user => (
-    user.update(req.body).then(() => res.sendStatus(200))
+    user.update(req.body).then(() => res.json(user))
   ))
 ));
 
