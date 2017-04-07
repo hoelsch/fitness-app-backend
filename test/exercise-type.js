@@ -100,4 +100,17 @@ describe('ExerciseType', function() {
       });
     });
   });
+
+  describe('DELETE /exercise-types/:id', function() {
+    it('should delete exercise-type with a given id', function(done) {
+      ExerciseType.create({ name: 'Test' }).then(function(newExerciseType) {
+        chai.request(server)
+          .delete(`/exercise-types/${newExerciseType.id}`)
+          .end((err, res) => {
+            res.should.have.status(200);
+            done();
+          });
+      });
+    });
+  });
 });
