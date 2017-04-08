@@ -8,6 +8,12 @@ const Group = require('../models').Group;
 chai.use(chaiHttp);
 
 describe('User', function() {
+  after(function(done) {
+    Group.destroy({ where: {} }).then(function() {
+      done();
+    });
+  });
+
   afterEach(function(done) {
     User.destroy({ where: {} }).then(function() {
       done();
