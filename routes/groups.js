@@ -21,7 +21,7 @@ router.post('/', (req, res) => (
 // update Group
 router.patch('/:id', (req, res) => (
   Group.find({ where: { id: req.params.id } }).then(group => (
-    group.update(req.body).then(() => res.sendStatus(200))
+    group.update(req.body).then(() => res.json(group))
   ))
 ));
 
