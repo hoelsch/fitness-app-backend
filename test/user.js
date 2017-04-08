@@ -9,50 +9,45 @@ const ExerciseType = require('../models').ExerciseType;
 
 chai.use(chaiHttp);
 
-describe('User', function() {
+describe('User', () => {
   after(function(done) {
     Group.destroy({ where: {} })
-      .then(function() {
-        return Exercise.destroy({ where: {} });
-      })
-      .then(function() {
-        return ExerciseType.destroy({ where: {} });
-      })
-      .then(function() {
-        done();
-      });
+      .then(() => Exercise.destroy({ where: {} }))
+      .then(() => ExerciseType.destroy({ where: {} }))
+      .then(() => done());
   });
 
   afterEach(function(done) {
-    User.destroy({ where: {} }).then(function() {
-      done();
-    });
+    User.destroy({ where: {} }).then(() => done());
   });
 
-  describe('GET /users/:id', function() {
+  describe('GET /users/:id', () => {
     it('should get an user with a given id', function(done) {
-      User.create({ name: 'User' }).then(function(user) {
+      User.create({ name: 'User' }).then((user) => {
         chai.request(server)
           .get(`/users/${user.id}`)
           .end((err, res) => {
             res.should.have.status(200);
             res.should.be.json;
+
             res.body.should.be.a('object');
             res.body.should.have.property('user');
+
             res.body.user.should.be.a('object');
             res.body.user.should.have.property('id');
+            res.body.user.id.should.equal(user.id);
             res.body.user.should.have.property('name');
+            res.body.user.name.should.equal(user.name);
             res.body.user.should.have.property('createdAt');
             res.body.user.should.have.property('updatedAt');
-            res.body.user.id.should.equal(user.id);
-            res.body.user.name.should.equal(user.name);
+
             done();
           });
       });
     });
   });
 
-  describe('POST /users', function() {
+  describe('POST /users', () => {
     it('should add an user', function(done) {
       const user = { name: 'User' };
       chai.request(server)
@@ -61,89 +56,103 @@ describe('User', function() {
         .end((err, res) => {
           res.should.have.status(200);
           res.should.be.json;
+
+          res.body.should.be.a('object');
+          res.body.should.have.property('user');
+
           res.body.user.should.be.a('object');
           res.body.user.should.have.property('id');
           res.body.user.should.have.property('name');
           res.body.user.should.have.property('createdAt');
           res.body.user.should.have.property('updatedAt');
           res.body.user.name.should.equal(user.name);
+
           done();
         });
     });
   });
 
-  describe('PATCH /users/:id', function() {
+  describe('PATCH /users/:id', () => {
     it('should update user with a given id', function(done) {
-      User.create({ name: 'User' }).then(function(user) {
+      User.create({ name: 'User' }).then((user) => {
         chai.request(server)
           .patch(`/users/${user.id}`)
           .send({ name: 'Updated' })
           .end((err, res) => {
             res.should.have.status(200);
             res.should.be.json;
+
             res.body.should.be.a('object');
             res.body.should.have.property('id');
+            res.body.id.should.equal(user.id);
             res.body.should.have.property('name');
             res.body.should.have.property('createdAt');
             res.body.should.have.property('updatedAt');
-            res.body.id.should.equal(user.id);
             res.body.name.should.equal('Updated');
+
             done();
           });
       });
     });
   });
 
-  describe('DELETE /users/:id', function() {
+  describe('DELETE /users/:id', () => {
     it('should delete user with a given id', function(done) {
-      User.create({ name: 'User' }).then(function(user) {
+      User.create({ name: 'User' }).then((user) => {
         chai.request(server)
           .delete(`/users/${user.id}`)
           .end((err, res) => {
             res.should.have.status(200);
+
             done();
           });
       });
     });
   });
 
-  describe('GET /users/:id/groups', function() {
+  describe('GET /users/:id/groups', () => {
     it('should get the groups of an user with a given id', function(done) {
-      let userId;
-      let groupId;
+      let user;
+      let group;
 
-      Promise.all([User.create({ name: 'User' }), Group.create({ name: 'Group' })])
+      Promise.all([
+        User.create({ name: 'User' }),
+        Group.create({ name: 'Group' }),
+      ])
         .then((values) => {
-          const user = values[0];
-          const group = values[1];
-          userId = user.id;
-          groupId = group.id;
-          return group.addUser(userId);
+          user = values[0];
+          group = values[1];
+
+          return group.addUser(user.id);
         })
         .then(() => {
           chai.request(server)
-            .get(`/users/${userId}/groups`)
+            .get(`/users/${user.id}/groups`)
             .end((err, res) => {
               res.should.have.status(200);
               res.should.be.json;
+
               res.body.should.be.a('array');
+
               res.body[0].should.be.a('object');
               res.body[0].should.have.property('id');
-              res.body[0].id.should.equal(groupId);
+              res.body[0].id.should.equal(group.id);
               res.body[0].should.have.property('name');
               res.body[0].should.have.property('createdAt');
               res.body[0].should.have.property('updatedAt');
               res.body[0].should.have.property('UserGroup');
+
               res.body[0].UserGroup.should.be.a('object');
               res.body[0].UserGroup.should.have.property('UserId');
-              res.body[0].UserGroup.UserId.should.equal(userId);
+              res.body[0].UserGroup.UserId.should.equal(user.id);
+
               done();
             });
         });
     });
   });
 
-  describe('GET /users/:id/exercises', function() {
+  describe('GET /users/:id/exercises', () => {
     it('should list all exercises of an user with a given id', function(done) {
       let user;
       let exercise;
@@ -168,6 +177,7 @@ describe('User', function() {
             .end((err, res) => {
               res.should.have.status(200);
               res.should.be.json;
+
               res.body.should.be.a('array');
 
               res.body[0].should.be.a('object');
@@ -194,6 +204,7 @@ describe('User', function() {
               res.body[0].exerciseType.id.should.equal(exerciseType.id);
               res.body[0].exerciseType.should.have.property('name');
               res.body[0].exerciseType.name.should.equal(exerciseType.name);
+
               done();
             });
         });
