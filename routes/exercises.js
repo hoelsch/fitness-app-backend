@@ -51,7 +51,7 @@ function createExercise(req, res, exerciseType) {
 
 // get exercises
 router.get('/', (req, res) => (
-  Exercise.findAll().then(exercise => res.json({ exercise }))
+  Exercise.findAll().then(exercises => res.json({ exercises }))
 ));
 
 // get exercise
