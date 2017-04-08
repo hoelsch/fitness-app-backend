@@ -4,14 +4,23 @@ const server = require('../bin/www');
 const should = chai.should();
 const User = require('../models').User;
 const Group = require('../models').Group;
+const Exercise = require('../models').Exercise;
+const ExerciseType = require('../models').ExerciseType;
 
 chai.use(chaiHttp);
 
 describe('User', function() {
   after(function(done) {
-    Group.destroy({ where: {} }).then(function() {
-      done();
-    });
+    Group.destroy({ where: {} })
+      .then(function() {
+        return Exercise.destroy({ where: {} });
+      })
+      .then(function() {
+        return ExerciseType.destroy({ where: {} });
+      })
+      .then(function() {
+        done();
+      });
   });
 
   afterEach(function(done) {
@@ -102,6 +111,7 @@ describe('User', function() {
     it('should get the groups of an user with a given id', function(done) {
       let userId;
       let groupId;
+
       Promise.all([User.create({ name: 'User' }), Group.create({ name: 'Group' })])
         .then((values) => {
           const user = values[0];
@@ -127,6 +137,63 @@ describe('User', function() {
               res.body[0].UserGroup.should.be.a('object');
               res.body[0].UserGroup.should.have.property('UserId');
               res.body[0].UserGroup.UserId.should.equal(userId);
+              done();
+            });
+        });
+    });
+  });
+
+  describe('GET /users/:id/exercises', function() {
+    it('should list all exercises of an user with a given id', function(done) {
+      let user;
+      let exercise;
+      let exerciseType;
+
+      Promise.all([
+        User.create({ name: 'User' }),
+        Exercise.create({ note: 'Note' }),
+        ExerciseType.create({ name: 'ExerciseType' }),
+      ])
+        .then((values) => {
+          user = values[0];
+          exercise = values[1];
+          exerciseType = values[2];
+
+          return exercise.setUser(user);
+        })
+        .then(() => exercise.setExerciseType(exerciseType))
+        .then(() => {
+          chai.request(server)
+            .get(`/users/${user.id}/exercises`)
+            .end((err, res) => {
+              res.should.have.status(200);
+              res.should.be.json;
+              res.body.should.be.a('array');
+
+              res.body[0].should.be.a('object');
+
+              res.body[0].should.have.property('id');
+              res.body[0].id.should.equal(exercise.id);
+
+              res.body[0].should.have.property('note');
+              res.body[0].note.should.equal(exercise.note);
+
+              res.body[0].should.have.property('sets');
+              res.body[0].sets.should.be.a('array');
+
+              res.body[0].should.have.property('user');
+              res.body[0].user.should.be.a('object');
+              res.body[0].user.should.have.property('id');
+              res.body[0].user.id.should.equal(user.id);
+              res.body[0].user.should.have.property('name');
+              res.body[0].user.name.should.equal(user.name);
+
+              res.body[0].should.have.property('exerciseType');
+              res.body[0].exerciseType.should.be.a('object');
+              res.body[0].exerciseType.should.have.property('id');
+              res.body[0].exerciseType.id.should.equal(exerciseType.id);
+              res.body[0].exerciseType.should.have.property('name');
+              res.body[0].exerciseType.name.should.equal(exerciseType.name);
               done();
             });
         });
