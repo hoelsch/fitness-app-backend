@@ -178,11 +178,25 @@ router.patch('/:exerciseId/sets/:setId', (req, res) => (
 ));
 
 // get comments of exercise
-router.get('/:id/comments', (req, res) => (
-  Exercise.find({ where: { id: req.params.id } }).then(exercise => (
-    exercise.getComments().then(comments => res.json({ comments }))
-  ))
-));
+router.get('/:id/comments', (req, res) => {
+  let commentsOfExercise;
+
+  Exercise.find({ where: { id: req.params.id } })
+    .then(exercise => exercise.getComments())
+    .then((comments) => {
+      commentsOfExercise = comments;
+      return Promise.all(comments.map(comment => comment.getUser()));
+    })
+    .then(users => (
+      Promise.all(commentsOfExercise.map((comment, index) => ({
+        id: comment.id,
+        text: comment.text,
+        createdAt: comment.createdAt,
+        user: users[index],
+      })))
+    ))
+    .then(result => res.json({ comments: result }));
+});
 
 // add comment to exercise
 router.post('/:id/comments', (req, res) => (
