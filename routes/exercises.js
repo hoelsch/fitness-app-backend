@@ -180,7 +180,7 @@ router.patch('/:exerciseId/sets/:setId', (req, res) => (
 // get comments of exercise
 router.get('/:id/comments', (req, res) => (
   Exercise.find({ where: { id: req.params.id } }).then(exercise => (
-    exercise.getComments().then(comments => res.json(comments))
+    exercise.getComments().then(comments => res.json({ comments }))
   ))
 ));
 
