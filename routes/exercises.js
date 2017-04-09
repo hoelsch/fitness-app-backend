@@ -150,7 +150,7 @@ router.delete('/:id', (req, res) => (
 // get sets of exercise
 router.get('/:id/sets', (req, res) => (
   Exercise.find({ where: { id: req.params.id } }).then(exercise => (
-    exercise.getSets().then(sets => res.json(sets))
+    exercise.getSets().then(sets => res.json({ sets }))
   ))
 ));
 
