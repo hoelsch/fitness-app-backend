@@ -69,25 +69,51 @@ router.get('/', (req, res) => {
       return Promise.all(exercises.map(exercise => exercise.getSets()));
     })
     .then((setsOfExercises) => {
-      const result = exercises.map((exercise, index) => (
-        {
-          id: exercise.id,
-          note: exercise.note,
-          createdAt: exercise.createdAt,
-          sets: setsOfExercises[index],
-          user: userOfExercises[index],
-          exerciseType: typesOfExercises[index],
-        }
-      ));
+      const result = exercises.map((exercise, index) => ({
+        id: exercise.id,
+        note: exercise.note,
+        createdAt: exercise.createdAt,
+        sets: setsOfExercises[index],
+        user: userOfExercises[index],
+        exerciseType: typesOfExercises[index],
+      }));
 
       res.json({ exercises: result });
     });
 });
 
 // get exercise
-router.get('/:id', (req, res) => (
-  Exercise.find({ where: { id: req.params.id } }).then(exercise => res.json({ exercise }))
-));
+router.get('/:id', (req, res) => {
+  let exercise;
+  let userOfExercise;
+  let typeOfExercise;
+
+  Exercise.find({ where: { id: req.params.id } })
+    .then((foundExercise) => {
+      exercise = foundExercise;
+      return exercise.getUser();
+    })
+    .then((user) => {
+      userOfExercise = user;
+      return exercise.getExerciseType();
+    })
+    .then((exerciseType) => {
+      typeOfExercise = exerciseType;
+      return exercise.getSets();
+    })
+    .then((setsOfExercise) => {
+      const result = {
+        id: exercise.id,
+        note: exercise.note,
+        createdAt: exercise.createdAt,
+        sets: setsOfExercise,
+        user: userOfExercise,
+        exerciseType: typeOfExercise,
+      };
+
+      res.json({ exercise: result });
+    });
+});
 
 // create exercise
 router.post('/', (req, res) => (
