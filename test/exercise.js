@@ -9,12 +9,6 @@ const User = require('../models').User;
 const Comment = require('../models').Comment;
 const MockData = require('./mock-data');
 
-const testExercise = MockData.exercise;
-const testExerciseType = MockData.exerciseType;
-const testSet = MockData.set;
-const testUser = MockData.user;
-const testComment = MockData.comment;
-
 chai.use(chaiHttp);
 
 /**
@@ -29,11 +23,11 @@ function createExercise() {
     let comment;
 
     Promise.all([
-      Exercise.create(testExercise),
-      ExerciseType.create(testExerciseType),
-      Set.create(testSet),
-      User.create(testUser),
-      Comment.create(testComment),
+      Exercise.create(MockData.exercise),
+      ExerciseType.create(MockData.exerciseType),
+      Set.create(MockData.set),
+      User.create(MockData.user),
+      Comment.create(MockData.comment),
     ])
       .then((values) => {
         exercise = values[0];
@@ -145,13 +139,13 @@ describe('Exercise', () => {
 
   describe('POST /exercises', () => {
     it('should add an exercise', function(done) {
-      User.create(testUser).then((user) => {
+      User.create(MockData.user).then((user) => {
         chai.request(server)
           .post('/exercises')
           .send({
-            note: testExercise.note,
-            exerciseTypeName: testExerciseType.name,
-            sets: [testSet],
+            note: MockData.exercise.note,
+            exerciseTypeName: MockData.exerciseType.name,
+            sets: [MockData.set],
             userId: user.id,
           })
           .end((err, res) => {
@@ -164,7 +158,7 @@ describe('Exercise', () => {
 
             res.body.exercise.should.have.property('id');
             res.body.exercise.should.have.property('note');
-            res.body.exercise.note.should.equal(testExercise.note);
+            res.body.exercise.note.should.equal(MockData.exercise.note);
             res.body.exercise.should.have.property('createdAt');
 
             res.body.exercise.should.have.property('sets');

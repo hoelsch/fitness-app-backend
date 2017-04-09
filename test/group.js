@@ -6,15 +6,41 @@ const Group = require('../models').Group;
 const User = require('../models').User;
 const Exercise = require('../models').Exercise;
 const ExerciseType = require('../models').ExerciseType;
+const MockData = require('./mock-data');
 
 chai.use(chaiHttp);
 
-describe('Group', () => {
-  const testGroup = { name: 'Group' };
-  const testUser = { name: 'User' };
-  const testExercise = { note: 'Note' };
-  const testExerciseType = { name: 'ExerciseType' };
+/**
+ * Creates and stores a group in db.
+ */
+function createGroup() {
+  return new Promise((resolve) => {
+    let group;
+    let user;
+    let exercise;
+    let exerciseType;
 
+    Promise.all([
+      Group.create(MockData.group),
+      User.create(MockData.user),
+      Exercise.create(MockData.exercise),
+      ExerciseType.create(MockData.exerciseType),
+    ])
+      .then((values) => {
+        group = values[0];
+        user = values[1];
+        exercise = values[2];
+        exerciseType = values[3];
+
+        return group.addUser(user);
+      })
+      .then(() => exercise.setUser(user))
+      .then(() => exercise.setExerciseType(exerciseType))
+      .then(() => resolve({ group, user, exercise, exerciseType }))
+  });
+}
+
+describe('Group', () => {
   after(function(done) {
     User.destroy({ where: {} })
       .then(() => Exercise.destroy({ where: {} }))
@@ -28,7 +54,7 @@ describe('Group', () => {
 
   describe('GET /groups', () => {
     it('should get all groups', function(done) {
-      Group.create(testGroup).then((group) => {
+      createGroup().then((result) => {
         chai.request(server)
           .get('/groups')
           .end((err, res) => {
@@ -40,9 +66,9 @@ describe('Group', () => {
             res.body.groups.should.be.a('array');
 
             res.body.groups[0].should.have.property('id');
-            res.body.groups[0].id.should.equal(group.id);
+            res.body.groups[0].id.should.equal(result.group.id);
             res.body.groups[0].should.have.property('name');
-            res.body.groups[0].name.should.equal(group.name);
+            res.body.groups[0].name.should.equal(result.group.name);
             res.body.groups[0].should.have.property('createdAt');
             res.body.groups[0].should.have.property('updatedAt');
 
@@ -54,9 +80,9 @@ describe('Group', () => {
 
   describe('GET /groups/:id', () => {
     it('should get a group with a given id', function(done) {
-      Group.create(testGroup).then((group) => {
+      createGroup().then((result) => {
         chai.request(server)
-          .get(`/groups/${group.id}`)
+          .get(`/groups/${result.group.id}`)
           .end((err, res) => {
             res.should.have.status(200);
             res.should.be.json;
@@ -66,9 +92,9 @@ describe('Group', () => {
             res.body.group.should.be.a('object');
 
             res.body.group.should.have.property('id');
-            res.body.group.id.should.equal(group.id);
+            res.body.group.id.should.equal(result.group.id);
             res.body.group.should.have.property('name');
-            res.body.group.name.should.equal(group.name);
+            res.body.group.name.should.equal(result.group.name);
             res.body.group.should.have.property('createdAt');
             res.body.group.should.have.property('updatedAt');
 
@@ -82,7 +108,7 @@ describe('Group', () => {
     it('should add a group', function(done) {
       chai.request(server)
         .post('/groups')
-        .send(testGroup)
+        .send(MockData.group)
         .end((err, res) => {
           res.should.have.status(200);
           res.should.be.json;
@@ -95,7 +121,7 @@ describe('Group', () => {
           res.body.group.should.have.property('name');
           res.body.group.should.have.property('createdAt');
           res.body.group.should.have.property('updatedAt');
-          res.body.group.name.should.equal(testGroup.name);
+          res.body.group.name.should.equal(MockData.group.name);
 
           done();
         });
@@ -104,9 +130,9 @@ describe('Group', () => {
 
   describe('PATCH /groups/:id', () => {
     it('should update group with a given id', function(done) {
-      Group.create(testGroup).then((group) => {
+      createGroup().then((result) => {
         chai.request(server)
-          .patch(`/groups/${group.id}`)
+          .patch(`/groups/${result.group.id}`)
           .send({ name: 'Updated' })
           .end((err, res) => {
             res.should.have.status(200);
@@ -114,7 +140,7 @@ describe('Group', () => {
 
             res.body.should.be.a('object');
             res.body.should.have.property('id');
-            res.body.id.should.equal(group.id);
+            res.body.id.should.equal(result.group.id);
             res.body.should.have.property('name');
             res.body.name.should.equal('Updated');
             res.body.should.have.property('createdAt');
@@ -128,9 +154,9 @@ describe('Group', () => {
 
   describe('DELETE /groups/:id', () => {
     it('should delete group with a given id', function(done) {
-      Group.create(testGroup).then((group) => {
+      createGroup().then((result) => {
         chai.request(server)
-          .delete(`/groups/${group.id}`)
+          .delete(`/groups/${result.group.id}`)
           .end((err, res) => {
             res.should.have.status(200);
 
@@ -142,53 +168,40 @@ describe('Group', () => {
 
   describe('GET /groups/:id/members', () => {
     it('should get members of a group with a given id', function(done) {
-      let group;
-      let user;
+      createGroup().then((result) => {
+        chai.request(server)
+          .get(`/groups/${result.group.id}/members`)
+          .end((err, res) => {
+            res.should.have.status(200);
+            res.should.be.json;
 
-      Promise.all([
-        Group.create(testGroup),
-        User.create(testUser),
-      ])
-        .then((values) => {
-          group = values[0];
-          user = values[1];
+            res.body.should.be.a('array');
 
-          return group.addUser(user);
-        })
-        .then(() => {
-          chai.request(server)
-            .get(`/groups/${group.id}/members`)
-            .end((err, res) => {
-              res.should.have.status(200);
-              res.should.be.json;
+            res.body[0].should.be.a('object');
+            res.body[0].should.have.property('id');
+            res.body[0].id.should.equal(result.user.id);
+            res.body[0].should.have.property('name');
+            res.body[0].name.should.equal(result.user.name);
+            res.body[0].should.have.property('createdAt');
+            res.body[0].should.have.property('updatedAt');
+            res.body[0].should.have.property('UserGroup');
 
-              res.body.should.be.a('array');
+            res.body[0].UserGroup.should.be.a('object');
+            res.body[0].UserGroup.should.have.property('GroupId');
+            res.body[0].UserGroup.GroupId.should.equal(result.group.id);
 
-              res.body[0].should.be.a('object');
-              res.body[0].should.have.property('id');
-              res.body[0].id.should.equal(user.id);
-              res.body[0].should.have.property('name');
-              res.body[0].name.should.equal(user.name);
-              res.body[0].should.have.property('createdAt');
-              res.body[0].should.have.property('updatedAt');
-              res.body[0].should.have.property('UserGroup');
-
-              res.body[0].UserGroup.should.be.a('object');
-              res.body[0].UserGroup.should.have.property('GroupId');
-              res.body[0].UserGroup.GroupId.should.equal(group.id);
-
-              done();
-            });
-        });
+            done();
+          });
+      });
     });
   });
 
   describe('POST /groups/:id/members', () => {
     it('should add an user to a group with a given id', function(done) {
-      Group.create(testGroup).then((group) => {
+      createGroup().then((result) => {
         chai.request(server)
-          .post(`/groups/${group.id}/members`)
-          .send(testUser)
+          .post(`/groups/${result.group.id}/members`)
+          .send(MockData.user)
           .end((err, res) => {
             res.should.have.status(200);
 
@@ -200,91 +213,57 @@ describe('Group', () => {
 
   describe('DELETE /groups/:group-id/members/:user-id', () => {
     it('should delete an user of a group with a given id', function(done) {
-      let group;
-      let user;
+      createGroup().then((result) => {
+        chai.request(server)
+          .delete(`/groups/${result.group.id}/members/${result.user.id}`)
+          .end((err, res) => {
+            res.should.have.status(200);
 
-      Promise.all([
-        Group.create(testGroup),
-        User.create(testUser),
-      ])
-        .then((values) => {
-          group = values[0];
-          user = values[1];
-
-          return group.addUser(user);
-        })
-        .then(() => {
-          chai.request(server)
-            .delete(`/groups/${group.id}/members/${user.id}`)
-            .end((err, res) => {
-              res.should.have.status(200);
-
-              done();
-            });
-        });
+            done();
+          });
+      });
     });
   });
 
   describe('GET /groups/:id/exercises', () => {
     it('should get the exercises of a group with a given id', function(done) {
-      let group;
-      let user;
-      let exercise;
-      let exerciseType;
+      createGroup().then((result) => {
+        chai.request(server)
+          .get(`/groups/${result.group.id}/exercises`)
+          .end((err, res) => {
+            res.should.have.status(200);
+            res.should.be.json;
 
-      Promise.all([
-        Group.create(testGroup),
-        User.create(testUser),
-        Exercise.create(testExercise),
-        ExerciseType.create(testExerciseType),
-      ])
-        .then((values) => {
-          group = values[0];
-          user = values[1];
-          exercise = values[2];
-          exerciseType = values[3];
+            res.body.should.be.a('array');
 
-          return group.addUser(user);
-        })
-        .then(() => exercise.setUser(user))
-        .then(() => exercise.setExerciseType(exerciseType))
-        .then(() => {
-          chai.request(server)
-            .get(`/groups/${group.id}/exercises`)
-            .end((err, res) => {
-              res.should.have.status(200);
-              res.should.be.json;
+            res.body[0].should.be.a('object');
 
-              res.body.should.be.a('array');
+            res.body[0].should.have.property('id');
+            res.body[0].id.should.equal(result.exercise.id);
 
-              res.body[0].should.be.a('object');
+            res.body[0].should.have.property('note');
+            res.body[0].note.should.equal(result.exercise.note);
 
-              res.body[0].should.have.property('id');
-              res.body[0].id.should.equal(exercise.id);
+            res.body[0].should.have.property('sets');
+            res.body[0].sets.should.be.a('array');
 
-              res.body[0].should.have.property('note');
-              res.body[0].note.should.equal(exercise.note);
+            res.body[0].should.have.property('user');
+            res.body[0].user.should.be.a('object');
+            res.body[0].user.should.have.property('id');
+            res.body[0].user.id.should.equal(result.user.id);
+            res.body[0].user.should.have.property('name');
+            res.body[0].user.name.should.equal(result.user.name);
 
-              res.body[0].should.have.property('sets');
-              res.body[0].sets.should.be.a('array');
+            res.body[0].should.have.property('exerciseType');
+            res.body[0].exerciseType.should.be.a('object');
+            res.body[0].exerciseType.should.have.property('id');
+            res.body[0].exerciseType.id.should.equal(result.exerciseType.id);
+            res.body[0].exerciseType.should.have.property('name');
+            res.body[0].exerciseType.name.should.equal(result.exerciseType.name);
 
-              res.body[0].should.have.property('user');
-              res.body[0].user.should.be.a('object');
-              res.body[0].user.should.have.property('id');
-              res.body[0].user.id.should.equal(user.id);
-              res.body[0].user.should.have.property('name');
-              res.body[0].user.name.should.equal(user.name);
-
-              res.body[0].should.have.property('exerciseType');
-              res.body[0].exerciseType.should.be.a('object');
-              res.body[0].exerciseType.should.have.property('id');
-              res.body[0].exerciseType.id.should.equal(exerciseType.id);
-              res.body[0].exerciseType.should.have.property('name');
-              res.body[0].exerciseType.name.should.equal(exerciseType.name);
-
-              done();
-            });
-        });
+            done();
+          });
+      });
     });
   });
 });

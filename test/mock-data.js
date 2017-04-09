@@ -4,4 +4,5 @@ module.exports = {
   set: { numReps: 0, weight: 0 },
   user: { name: 'User' },
   comment: { text: 'Comment' },
+  group: { name: 'Group' },
 };
