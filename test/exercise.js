@@ -7,12 +7,13 @@ const ExerciseType = require('../models').ExerciseType;
 const Set = require('../models').Set;
 const User = require('../models').User;
 const Comment = require('../models').Comment;
+const MockData = require('./mock-data');
 
-const testExercise = { note: 'Note' };
-const testExerciseType = { name: 'ExerciseType' };
-const testSet = { numReps: 0, weight: 0 };
-const testUser = { name: 'User' };
-const testComment = { text: 'Comment' };
+const testExercise = MockData.exercise;
+const testExerciseType = MockData.exerciseType;
+const testSet = MockData.set;
+const testUser = MockData.user;
+const testComment = MockData.comment;
 
 chai.use(chaiHttp);
 
