@@ -50,9 +50,39 @@ function createExercise(req, res, exerciseType) {
 }
 
 // get exercises
-router.get('/', (req, res) => (
-  Exercise.findAll().then(exercises => res.json({ exercises }))
-));
+router.get('/', (req, res) => {
+  let exercises;
+  let userOfExercises;
+  let typesOfExercises;
+
+  Exercise.findAll()
+    .then((allExercises) => {
+      exercises = allExercises;
+      return Promise.all(exercises.map(exercise => exercise.getUser()));
+    })
+    .then((users) => {
+      userOfExercises = users;
+      return Promise.all(exercises.map(exercise => exercise.getExerciseType()));
+    })
+    .then((exerciseTypes) => {
+      typesOfExercises = exerciseTypes;
+      return Promise.all(exercises.map(exercise => exercise.getSets()));
+    })
+    .then((setsOfExercises) => {
+      const result = exercises.map((exercise, index) => (
+        {
+          id: exercise.id,
+          note: exercise.note,
+          createdAt: exercise.createdAt,
+          sets: setsOfExercises[index],
+          user: userOfExercises[index],
+          exerciseType: typesOfExercises[index],
+        }
+      ));
+
+      res.json({ exercises: result });
+    });
+});
 
 // get exercise
 router.get('/:id', (req, res) => (
