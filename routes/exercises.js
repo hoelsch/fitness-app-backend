@@ -39,7 +39,7 @@ function createExercise(req, res, exerciseType) {
                   exerciseType,
                 };
 
-                res.json(result);
+                res.json({ exercise: result });
               });
             }
           })
