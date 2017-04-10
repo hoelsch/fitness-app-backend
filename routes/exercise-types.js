@@ -21,16 +21,16 @@ router.post('/', (req, res) => (
 
 // update exercise type
 router.patch('/:id', (req, res) => (
-  ExerciseType.find({ where: { id: req.params.id } }).then(exerciseType => (
-    exerciseType.update(req.body).then(updatedExerciseType => res.json(updatedExerciseType))
-  ))
+  ExerciseType.find({ where: { id: req.params.id } })
+    .then(exerciseType => exerciseType.update(req.body))
+    .then(updatedExerciseType => res.json(updatedExerciseType))
 ));
 
 // delete exercise type
 router.delete('/:id', (req, res) => (
-  ExerciseType.find({ where: { id: req.params.id } }).then(exerciseType => (
-    exerciseType.destroy().then(() => res.sendStatus(200))
-  ))
+  ExerciseType.find({ where: { id: req.params.id } })
+    .then(exerciseType => exerciseType.destroy())
+    .then(() => res.sendStatus(200))
 ));
 
 module.exports = router;
