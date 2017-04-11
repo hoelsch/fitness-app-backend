@@ -1,2 +1,4 @@
 node_modules/
-127.0.0.1
+doc/
+db-development.sqlite
+db-test.sqlite
