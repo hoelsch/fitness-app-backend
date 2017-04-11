@@ -38,6 +38,8 @@ router.get('/:id', (req, res) => (
  * @apiName PostExerciseType
  * @apiGroup ExerciseType
  *
+ * @apiParam {String} name Name of the exercise.
+ *
  * @apiSuccess {Number} id ID of the exercise type.
  * @apiSuccess {String} name Name of the exercise.
  * @apiSuccess {String} createdAt Date of creation.
@@ -51,6 +53,8 @@ router.post('/', (req, res) => (
  * @api {patch} /exercise-types/:id Edit an exercise type
  * @apiName PatchExerciseType
  * @apiGroup ExerciseType
+ *
+ * @apiParam {String} name Name of the exercise.
  *
  * @apiSuccess {Number} id ID of the exercise type.
  * @apiSuccess {String} name Name of the exercise.
