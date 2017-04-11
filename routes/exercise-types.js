@@ -10,7 +10,7 @@ const router = express.Router();
  *
  * @apiSuccess {Object[]} body List of exercise types.
  * @apiSuccess {Number} body.id ID of the exercise type.
- * @apiSuccess {String} body.name  Name of the exercise.
+ * @apiSuccess {String} body.name Name of the exercise.
  * @apiSuccess {String} body.createdAt Date of creation.
  * @apiSuccess {String} body.updatedAt Date of last update.
  */
