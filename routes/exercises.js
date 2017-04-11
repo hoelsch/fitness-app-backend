@@ -8,48 +8,19 @@ const Comment = require('../models').Comment;
 const router = express.Router();
 
 /**
- * Creates a new exercise.
- * @param {object} req - Request.
- * @param {object} res - Response.
- * @param {object} exerciseType - Type of the exercise.
+ * @api {get} /exercises List exercises
+ * @apiName GetExercises
+ * @apiGroup Exercise
+ *
+ * @apiSuccess {Object[]} body List of exercises.
+ * @apiSuccess {Number} body.id ID of the exercise.
+ * @apiSuccess {String} body.note Note of the exercise.
+ * @apiSuccess {Object[]} body.sets Sets of the exercise.
+ * @apiSuccess {Object} body.user User of the exercise.
+ * @apiSuccess {Object} body.exerciseType Type of the exercise.
+ * @apiSuccess {String} body.createdAt Date of creation.
+ * @apiSuccess {String} body.updatedAt Date of last update.
  */
-function createExercise(req, res, exerciseType) {
-  Exercise.create({ note: req.body.note }).then(exercise => (
-    exercise.setUser(req.body.userId).then(() => (
-      exercise.setExerciseType(exerciseType).then(() => {
-        let numInsertedSets = 0;
-        const sets = [];
-
-        // add sets to db
-        req.body.sets.forEach(set => (
-          Set.create(set).then((insertedSet) => {
-            sets.push(insertedSet);
-            insertedSet.setExercise(exercise);
-            numInsertedSets += 1;
-
-            if (numInsertedSets === req.body.sets.length) {
-              // all sets were inserted in db
-              User.find({ where: { id: req.body.userId } }).then((user) => {
-                const result = {
-                  id: exercise.id,
-                  note: exercise.note,
-                  createdAt: exercise.createdAt,
-                  sets,
-                  user,
-                  exerciseType,
-                };
-
-                res.json({ exercise: result });
-              });
-            }
-          })
-        ));
-      })
-    ))
-  ));
-}
-
-// get exercises
 router.get('/', (req, res) => {
   let exercises;
   let userOfExercises;
@@ -78,11 +49,23 @@ router.get('/', (req, res) => {
         exerciseType: typesOfExercises[index],
       }));
 
-      res.json({ exercises: result });
+      res.json(result);
     });
 });
 
-// get exercise
+/**
+ * @api {get} /exercises/:id Get a single exercise type
+ * @apiName GetExercise
+ * @apiGroup Exercise
+ *
+ * @apiSuccess {Number} id ID of the exercise.
+ * @apiSuccess {String} note Note of the exercise.
+ * @apiSuccess {Object[]} sets Sets of the exercise.
+ * @apiSuccess {Object} user User of the exercise.
+ * @apiSuccess {Object} exerciseType Type of the exercise.
+ * @apiSuccess {String} createdAt Date of creation.
+ * @apiSuccess {String} updatedAt Date of last update.
+ */
 router.get('/:id', (req, res) => {
   let exercise;
   let userOfExercise;
@@ -111,73 +94,177 @@ router.get('/:id', (req, res) => {
         exerciseType: typeOfExercise,
       };
 
-      res.json({ exercise: result });
+      res.json(result);
     });
 });
 
-// create exercise
-router.post('/', (req, res) => (
-  // check if exercise type already exists
-  ExerciseType.find({ where: { name: req.body.exerciseTypeName } }).then((exerciseType) => {
-    if (exerciseType) {
-      // exercise type exists
-      createExercise(req, res, exerciseType);
-    } else if (req.body.exerciseTypeName) {
-      // create a new exercise type
-      ExerciseType.create({ name: req.body.exerciseTypeName }).then(newExerciseType => (
-        createExercise(req, res, newExerciseType)
-      ));
-    } else {
-      // TODO return error because exerciseTypeName is not given
-    }
-  })
-));
+/**
+ * @api {post} /exercises Create an exercise
+ * @apiName PostExercise
+ * @apiGroup Exercise
+ *
+ * @apiParam {String} exerciseTypeName Name of the exercise.
+ * @apiParam {String} [note] Optional note of the exercise.
+ * @apiParam {Number} userId ID of the user of the exercise.
+ * @apiParam {Object[]} sets Sets of the exercise.
+ *
+ * @apiSuccess {Number} id ID of the exercise.
+ * @apiSuccess {String} note Note of the exercise.
+ * @apiSuccess {Object[]} sets Sets of the exercise.
+ * @apiSuccess {Object} user User of the exercise.
+ * @apiSuccess {Object} exerciseType Type of the exercise.
+ * @apiSuccess {String} createdAt Date of creation.
+ * @apiSuccess {String} updatedAt Date of last update.
+ */
+router.post('/', (req, res) => {
+  let exercise;
+  let typeOfExercise;
+  let setsOfExercise;
 
-// update exercise
+  ExerciseType.find({ where: { name: req.body.exerciseTypeName } })
+    .then((exerciseType) => {
+      if (exerciseType) {
+        return exerciseType;
+      }
+      // exercise type does not exist --> create a new one
+      return ExerciseType.create({ name: req.body.exerciseTypeName });
+    })
+    .then((exerciseType) => {
+      typeOfExercise = exerciseType;
+      return Exercise.create({ note: req.body.note });
+    })
+    .then((newExercise) => {
+      exercise = newExercise;
+      return exercise.setExerciseType(typeOfExercise);
+    })
+    .then(() => exercise.setUser(req.body.userId))
+    .then(() => Promise.all(req.body.sets.map(set => Set.create(set))))
+    .then((sets) => {
+      setsOfExercise = sets;
+      return User.find({ where: { id: req.body.userId } });
+    })
+    .then((user) => {
+      const result = {
+        user,
+        id: exercise.id,
+        note: exercise.note,
+        createdAt: exercise.createdAt,
+        updatedAt: exercise.updatedAt,
+        sets: setsOfExercise,
+        exerciseType: typeOfExercise,
+      };
+
+      res.json(result);
+    });
+});
+
+/**
+ * @api {patch} /exercise/:id Edit an exercise
+ * @apiName PatchExercise
+ * @apiGroup Exercise
+ *
+ * @apiParam {String} [exerciseTypeName] Optional name of the exercise.
+ * @apiParam {String} [note] Optional note of the exercise.
+ * @apiParam {Object[]} [sets] Optional sets of the exercise.
+ *
+ * @apiSuccess {Number} id ID of the exercise type.
+ * @apiSuccess {String} name Name of the exercise.
+ * @apiSuccess {String} createdAt Date of creation.
+ * @apiSuccess {String} updatedAt Date of last update.
+ */
 router.patch('/:id', (req, res) => (
-  Exercise.find({ where: { id: req.params.id } }).then(exercise => (
-    exercise.update(req.body).then(() => res.sendStatus(200))
-  ))
+  Exercise.find({ where: { id: req.params.id } })
+    .then(exercise => exercise.update(req.body))
+    .then(() => res.sendStatus(204))
 ));
 
-// delete exercise
+/**
+ * @api {delete} /exercises/:id Delete an exercise
+ * @apiName DeleteExercise
+ * @apiGroup Exercise
+ */
 router.delete('/:id', (req, res) => (
-  Exercise.find({ where: { id: req.params.id } }).then(exercise => (
-    exercise.destroy().then(() => res.sendStatus(200))
-  ))
+  Exercise.find({ where: { id: req.params.id } })
+    .then(exercise => exercise.destroy())
+    .then(() => res.sendStatus(204))
 ));
 
-// get sets of exercise
+/**
+ * @api {get} /exercises/:id/sets List sets of exercise
+ * @apiName GetExerciseSets
+ * @apiGroup Exercise
+ *
+ * @apiSuccess {Object[]} body List of sets of an exercise.
+ * @apiSuccess {Number} body.id ID of the set.
+ * @apiSuccess {Number} body.numReps Number of reps.
+ * @apiSuccess {Number} body.weight Weight.
+ * @apiSuccess {Number} body.ExerciseId ID of the corresponding exercise.
+ * @apiSuccess {String} body.createdAt Date of creation.
+ * @apiSuccess {String} body.updatedAt Date of last update.
+ */
 router.get('/:id/sets', (req, res) => (
-  Exercise.find({ where: { id: req.params.id } }).then(exercise => (
-    exercise.getSets().then(sets => res.json({ sets }))
-  ))
+  Exercise.find({ where: { id: req.params.id } })
+    .then(exercise => exercise.getSets())
+    .then(sets => res.json(sets))
 ));
 
-// add set to exercise
-router.post('/:id/sets', (req, res) => (
-  Exercise.find({ where: { id: req.params.id } }).then(exercise => (
-    Set.create(req.body.set).then(set => (
-      set.setExercise(exercise).then(() => (res.sendStatus(200)))
-    ))
-  ))
-));
+/**
+ * @api {post} /exercises/:id/sets Create a set for an exercise
+ * @apiName PostExerciseSet
+ * @apiGroup Exercise
+ *
+ * @apiParam {Number} numReps Number of reps.
+ * @apiParam {Number} weight Weight.
+ */
+router.post('/:id/sets', (req, res) => {
+  let exercise;
 
-// remove set of exercise
+  Exercise.find({ where: { id: req.params.id } })
+    .then((exer) => {
+      exercise = exer;
+      return Set.create(req.body.set);
+    })
+    .then(set => set.setExercise(exercise))
+    .then(() => res.sendStatus(204));
+});
+
+/**
+ * @api {delete} /exercises/:exercise-id/sets/:set-id Delete a set of an exercise
+ * @apiName DeleteExerciseSet
+ * @apiGroup Exercise
+ */
 router.delete('/:exerciseId/sets/:setId', (req, res) => (
-  Set.find({ where: { id: req.params.setId } }).then(set => (
-    set.destroy().then(() => (res.sendStatus(200)))
-  ))
+  Set.find({ where: { id: req.params.setId } })
+    .then(set => set.destroy())
+    .then(() => res.sendStatus(204))
 ));
 
-// update set to exercise
+/**
+ * @api {patch} /exercise/:exercise-id/sets/:set-id Edit a set of an exercise
+ * @apiName PatchExerciseSet
+ * @apiGroup Exercise
+ *
+ * @apiParam {Number} [numRep] Optional number of reps.
+ * @apiParam {Number} [weight] Weight.
+ */
 router.patch('/:exerciseId/sets/:setId', (req, res) => (
-  Set.find({ where: { id: req.params.setId } }).then(set => (
-    set.update(req.body).then(() => (res.sendStatus(200)))
-  ))
+  Set.find({ where: { id: req.params.setId } })
+    .then(set => set.update(req.body))
+    .then(() => res.sendStatus(204))
 ));
 
-// get comments of exercise
+/**
+ * @api {get} /exercises/:id/comments List comments of exercise
+ * @apiName GetExerciseComments
+ * @apiGroup Exercise
+ *
+ * @apiSuccess {Object[]} body List of comments of an exercise.
+ * @apiSuccess {Number} body.id ID of the comment.
+ * @apiSuccess {String} body.text Text of the comment.
+ * @apiSuccess {Object} body.user User that posted the comment.
+ * @apiSuccess {String} body.createdAt Date of creation.
+ * @apiSuccess {String} body.updatedAt Date of last update.
+ */
 router.get('/:id/comments', (req, res) => {
   let commentsOfExercise;
 
@@ -192,35 +279,56 @@ router.get('/:id/comments', (req, res) => {
         id: comment.id,
         text: comment.text,
         createdAt: comment.createdAt,
+        updatedAt: comment.updatedAt,
         user: users[index],
       })))
     ))
-    .then(result => res.json({ comments: result }));
+    .then(result => res.json(result));
 });
 
-// add comment to exercise
-router.post('/:id/comments', (req, res) => (
-  Exercise.find({ where: { id: req.params.id } }).then(exercise => (
-    Comment.create({ text: req.body.text }).then(comment => (
-      comment.setExercise(exercise).then(() => (
-        comment.setUser(req.body.userId).then(() => (res.sendStatus(200)))
-      ))
-    ))
-  ))
-));
+/**
+ * @api {post} /exercises/:id/comments Create a comment for an exercise
+ * @apiName PostExerciseComment
+ * @apiGroup Exercise
+ *
+ * @apiParam {String} text Text of the comment.
+ * @apiParam {Number} userId ID of the user posting the comment.
+ */
+router.post('/:id/comments', (req, res) => {
+  let comment;
 
-// update comment of exercise
+  Comment.create({ text: req.body.text })
+    .then((newComment) => {
+      comment = newComment;
+      return Exercise.find({ where: { id: req.params.id } });
+    })
+    .then(exercise => comment.setExercise(exercise))
+    .then(() => comment.setUser(req.body.userId))
+    .then(() => res.sendStatus(204));
+});
+
+/**
+ * @api {patch} /exercise/:exercise-id/comments/:comment-id Edit a comment of an exercise
+ * @apiName PatchExerciseComment
+ * @apiGroup Exercise
+ *
+ * @apiParam {String} text Text of the comment.
+ */
 router.patch('/:exerciseId/comments/:commentId', (req, res) => (
-  Comment.find({ where: { id: req.params.commentId } }).then(comment => (
-    comment.update({ text: req.body.text }).then(() => (res.sendStatus(200)))
-  ))
+  Comment.find({ where: { id: req.params.commentId } })
+    .then(comment => comment.update({ text: req.body.text }))
+    .then(() => res.sendStatus(204))
 ));
 
-// delete comment of exercise
+/**
+ * @api {delete} /exercises/:exercise-id/comments/:comment-id Delete a comment of an exercise
+ * @apiName DeleteExerciseComment
+ * @apiGroup Exercise
+ */
 router.delete('/:exerciseId/comments/:commentId', (req, res) => (
-  Comment.find({ where: { id: req.params.commentId } }).then(comment => (
-    comment.destroy().then(() => (res.sendStatus(200)))
-  ))
+  Comment.find({ where: { id: req.params.commentId } })
+    .then(comment => comment.destroy())
+    .then(() => res.sendStatus(204))
 ));
 
 module.exports = router;

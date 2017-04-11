@@ -69,29 +69,26 @@ describe('Exercise', () => {
           .end((err, res) => {
             res.should.have.status(200);
             res.should.be.json;
+            res.body.should.be.a('array');
 
-            res.body.should.be.a('object');
-            res.body.should.have.property('exercises');
-            res.body.exercises.should.be.a('array');
+            res.body[0].should.have.property('id');
+            res.body[0].id.should.equal(result.exercise.id);
+            res.body[0].should.have.property('note');
+            res.body[0].note.should.equal(result.exercise.note);
+            res.body[0].should.have.property('createdAt');
 
-            res.body.exercises[0].should.have.property('id');
-            res.body.exercises[0].id.should.equal(result.exercise.id);
-            res.body.exercises[0].should.have.property('note');
-            res.body.exercises[0].note.should.equal(result.exercise.note);
-            res.body.exercises[0].should.have.property('createdAt');
+            res.body[0].should.have.property('sets');
+            res.body[0].sets.should.be.a('array');
+            res.body[0].sets[0].should.have.property('id');
+            res.body[0].sets[0].id.should.equal(result.set.id);
 
-            res.body.exercises[0].should.have.property('sets');
-            res.body.exercises[0].sets.should.be.a('array');
-            res.body.exercises[0].sets[0].should.have.property('id');
-            res.body.exercises[0].sets[0].id.should.equal(result.set.id);
+            res.body[0].should.have.property('user');
+            res.body[0].user.should.have.property('id');
+            res.body[0].user.id.should.equal(result.user.id);
 
-            res.body.exercises[0].should.have.property('user');
-            res.body.exercises[0].user.should.have.property('id');
-            res.body.exercises[0].user.id.should.equal(result.user.id);
-
-            res.body.exercises[0].should.have.property('exerciseType');
-            res.body.exercises[0].exerciseType.should.have.property('id');
-            res.body.exercises[0].exerciseType.id.should.equal(result.exerciseType.id);
+            res.body[0].should.have.property('exerciseType');
+            res.body[0].exerciseType.should.have.property('id');
+            res.body[0].exerciseType.id.should.equal(result.exerciseType.id);
 
             done();
           });
@@ -107,29 +104,26 @@ describe('Exercise', () => {
           .end((err, res) => {
             res.should.have.status(200);
             res.should.be.json;
-
             res.body.should.be.a('object');
-            res.body.should.have.property('exercise');
-            res.body.exercise.should.be.a('object');
 
-            res.body.exercise.should.have.property('id');
-            res.body.exercise.id.should.equal(result.exercise.id);
-            res.body.exercise.should.have.property('note');
-            res.body.exercise.note.should.equal(result.exercise.note);
-            res.body.exercise.should.have.property('createdAt');
+            res.body.should.have.property('id');
+            res.body.id.should.equal(result.exercise.id);
+            res.body.should.have.property('note');
+            res.body.note.should.equal(result.exercise.note);
+            res.body.should.have.property('createdAt');
 
-            res.body.exercise.should.have.property('sets');
-            res.body.exercise.sets.should.be.a('array');
-            res.body.exercise.sets[0].should.have.property('id');
-            res.body.exercise.sets[0].id.should.equal(result.set.id);
+            res.body.should.have.property('sets');
+            res.body.sets.should.be.a('array');
+            res.body.sets[0].should.have.property('id');
+            res.body.sets[0].id.should.equal(result.set.id);
 
-            res.body.exercise.should.have.property('user');
-            res.body.exercise.user.should.have.property('id');
-            res.body.exercise.user.id.should.equal(result.user.id);
+            res.body.should.have.property('user');
+            res.body.user.should.have.property('id');
+            res.body.user.id.should.equal(result.user.id);
 
-            res.body.exercise.should.have.property('exerciseType');
-            res.body.exercise.exerciseType.should.have.property('id');
-            res.body.exercise.exerciseType.id.should.equal(result.exerciseType.id);
+            res.body.should.have.property('exerciseType');
+            res.body.exerciseType.should.have.property('id');
+            res.body.exerciseType.id.should.equal(result.exerciseType.id);
 
             done();
           });
@@ -151,26 +145,24 @@ describe('Exercise', () => {
           .end((err, res) => {
             res.should.have.status(200);
             res.should.be.json;
-
             res.body.should.be.a('object');
-            res.body.should.have.property('exercise');
-            res.body.exercise.should.be.a('object');
 
-            res.body.exercise.should.have.property('id');
-            res.body.exercise.should.have.property('note');
-            res.body.exercise.note.should.equal(MockData.exercise.note);
-            res.body.exercise.should.have.property('createdAt');
+            res.body.should.have.property('id');
+            res.body.should.have.property('note');
+            res.body.note.should.equal(MockData.exercise.note);
+            res.body.should.have.property('createdAt');
+            res.body.should.have.property('updatedAt');
 
-            res.body.exercise.should.have.property('sets');
-            res.body.exercise.sets.should.be.a('array');
-            res.body.exercise.sets[0].should.have.property('id');
+            res.body.should.have.property('sets');
+            res.body.sets.should.be.a('array');
+            res.body.sets[0].should.have.property('id');
 
-            res.body.exercise.should.have.property('user');
-            res.body.exercise.user.should.have.property('id');
-            res.body.exercise.user.id.should.equal(user.id);
+            res.body.should.have.property('user');
+            res.body.user.should.have.property('id');
+            res.body.user.id.should.equal(user.id);
 
-            res.body.exercise.should.have.property('exerciseType');
-            res.body.exercise.exerciseType.should.have.property('id');
+            res.body.should.have.property('exerciseType');
+            res.body.exerciseType.should.have.property('id');
 
             done();
           });
@@ -185,7 +177,7 @@ describe('Exercise', () => {
           .patch(`/exercises/${result.exercise.id}`)
           .send({ note: 'Updated' })
           .end((err, res) => {
-            res.should.have.status(200);
+            res.should.have.status(204);
 
             done();
           });
@@ -199,7 +191,7 @@ describe('Exercise', () => {
         chai.request(server)
           .delete(`/exercises/${result.exercise.id}`)
           .end((err, res) => {
-            res.should.have.status(200);
+            res.should.have.status(204);
 
             done();
           });
@@ -215,16 +207,13 @@ describe('Exercise', () => {
           .end((err, res) => {
             res.should.have.status(200);
             res.should.be.json;
+            res.body.should.be.a('array');
 
-            res.body.should.be.a('object');
-            res.body.should.have.property('sets');
-            res.body.sets.should.be.a('array');
+            res.body[0].should.have.property('numReps');
+            res.body[0].numReps.should.equal(result.set.numReps);
 
-            res.body.sets[0].should.have.property('numReps');
-            res.body.sets[0].numReps.should.equal(result.set.numReps);
-
-            res.body.sets[0].should.have.property('weight');
-            res.body.sets[0].weight.should.equal(result.set.weight);
+            res.body[0].should.have.property('weight');
+            res.body[0].weight.should.equal(result.set.weight);
 
             done();
           });
@@ -239,7 +228,7 @@ describe('Exercise', () => {
           .post(`/exercises/${result.exercise.id}/sets`)
           .send({ numReps: 1, weight: 1 })
           .end((err, res) => {
-            res.should.have.status(200);
+            res.should.have.status(204);
 
             done();
           });
@@ -253,7 +242,7 @@ describe('Exercise', () => {
         chai.request(server)
           .delete(`/exercises/${result.exercise.id}/sets/${result.set.id}`)
           .end((err, res) => {
-            res.should.have.status(200);
+            res.should.have.status(204);
 
             done();
           });
@@ -268,7 +257,7 @@ describe('Exercise', () => {
           .patch(`/exercises/${result.exercise.id}/sets/${result.set.id}`)
           .send({ numReps: 1, weight: 1 })
           .end((err, res) => {
-            res.should.have.status(200);
+            res.should.have.status(204);
 
             done();
           });
@@ -284,24 +273,22 @@ describe('Exercise', () => {
           .end((err, res) => {
             res.should.have.status(200);
             res.should.be.json;
+            res.body.should.be.a('array');
 
-            res.body.should.be.a('object');
-            res.body.should.have.property('comments');
-            res.body.comments.should.be.a('array');
+            res.body[0].should.have.property('id');
+            res.body[0].id.should.equal(result.comment.id);
 
-            res.body.comments[0].should.have.property('id');
-            res.body.comments[0].id.should.equal(result.comment.id);
+            res.body[0].should.have.property('text');
+            res.body[0].text.should.equal(result.comment.text);
 
-            res.body.comments[0].should.have.property('text');
-            res.body.comments[0].text.should.equal(result.comment.text);
+            res.body[0].should.have.property('user');
+            res.body[0].user.should.have.property('id');
+            res.body[0].user.id.should.equal(result.user.id);
+            res.body[0].user.should.have.property('name');
+            res.body[0].user.name.should.equal(result.user.name);
 
-            res.body.comments[0].should.have.property('user');
-            res.body.comments[0].user.should.have.property('id');
-            res.body.comments[0].user.id.should.equal(result.user.id);
-            res.body.comments[0].user.should.have.property('name');
-            res.body.comments[0].user.name.should.equal(result.user.name);
-
-            res.body.comments[0].should.have.property('createdAt');
+            res.body[0].should.have.property('createdAt');
+            res.body[0].should.have.property('updatedAt');
 
             done();
           });
@@ -316,7 +303,7 @@ describe('Exercise', () => {
           .post(`/exercises/${result.exercise.id}/comments`)
           .send(result.comment.text)
           .end((err, res) => {
-            res.should.have.status(200);
+            res.should.have.status(204);
 
             done();
           });
@@ -331,7 +318,7 @@ describe('Exercise', () => {
           .patch(`/exercises/${result.exercise.id}/comments/${result.comment.id}`)
           .send(result.comment.text)
           .end((err, res) => {
-            res.should.have.status(200);
+            res.should.have.status(204);
 
             done();
           });
@@ -345,7 +332,7 @@ describe('Exercise', () => {
         chai.request(server)
           .delete(`/exercises/${result.exercise.id}/comments/${result.comment.id}`)
           .end((err, res) => {
-            res.should.have.status(200);
+            res.should.have.status(204);
 
             done();
           });
