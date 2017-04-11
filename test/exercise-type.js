@@ -27,17 +27,16 @@ describe('ExerciseType', () => {
           .end((err, res) => {
             res.should.have.status(200);
             res.should.be.json;
+            res.body.should.be.a('array');
 
-            res.body.should.be.a('object');
-            res.body.should.have.property('exerciseType');
-            res.body.exerciseType.should.be.a('array');
+            res.body[0].should.have.property('id');
+            res.body[0].id.should.equal(exerciseType.id);
 
-            res.body.exerciseType[0].should.have.property('id');
-            res.body.exerciseType[0].id.should.equal(exerciseType.id);
-            res.body.exerciseType[0].should.have.property('name');
-            res.body.exerciseType[0].name.should.equal(exerciseType.name);
-            res.body.exerciseType[0].should.have.property('createdAt');
-            res.body.exerciseType[0].should.have.property('updatedAt');
+            res.body[0].should.have.property('name');
+            res.body[0].name.should.equal(exerciseType.name);
+
+            res.body[0].should.have.property('createdAt');
+            res.body[0].should.have.property('updatedAt');
 
             done();
           });
@@ -53,17 +52,16 @@ describe('ExerciseType', () => {
           .end((err, res) => {
             res.should.have.status(200);
             res.should.be.json;
-
             res.body.should.be.a('object');
-            res.body.should.have.property('exerciseType');
 
-            res.body.exerciseType.should.be.a('object');
-            res.body.exerciseType.should.have.property('id');
-            res.body.exerciseType.id.should.equal(exerciseType.id);
-            res.body.exerciseType.should.have.property('name');
-            res.body.exerciseType.name.should.equal(exerciseType.name);
-            res.body.exerciseType.should.have.property('createdAt');
-            res.body.exerciseType.should.have.property('updatedAt');
+            res.body.should.have.property('id');
+            res.body.id.should.equal(exerciseType.id);
+
+            res.body.should.have.property('name');
+            res.body.name.should.equal(exerciseType.name);
+
+            res.body.should.have.property('createdAt');
+            res.body.should.have.property('updatedAt');
 
             done();
           });
@@ -79,8 +77,8 @@ describe('ExerciseType', () => {
         .end((err, res) => {
           res.should.have.status(200);
           res.should.be.json;
-
           res.body.should.be.a('object');
+
           res.body.should.have.property('id');
           res.body.should.have.property('name');
           res.body.name.should.equal(MockData.exerciseType.name);
@@ -122,7 +120,7 @@ describe('ExerciseType', () => {
         chai.request(server)
           .delete(`/exercise-types/${exerciseType.id}`)
           .end((err, res) => {
-            res.should.have.status(200);
+            res.should.have.status(204);
 
             done();
           });
