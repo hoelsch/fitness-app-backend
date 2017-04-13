@@ -2,3 +2,4 @@ node_modules/
 db-development.sqlite
 db-test.sqlite
 .DS_Store
+coverage/
