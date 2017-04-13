@@ -1,5 +1,6 @@
 # Fitness App Backend
 [![Build Status](https://travis-ci.org/hoelsch/fitness-app-backend.svg?branch=master)](https://travis-ci.org/hoelsch/fitness-app-backend)
+[![Coverage Status](https://coveralls.io/repos/github/hoelsch/fitness-app-backend/badge.svg?branch=master)](https://coveralls.io/github/hoelsch/fitness-app-backend?branch=master)
 
 Backend for a fitness app using Node.js and Express.
 
