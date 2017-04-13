@@ -6,6 +6,7 @@ const User = require('../models').User;
 const Group = require('../models').Group;
 const Exercise = require('../models').Exercise;
 const ExerciseType = require('../models').ExerciseType;
+const Set = require('../models').Set;
 const MockData = require('./mock-data');
 
 chai.use(chaiHttp);
@@ -19,24 +20,28 @@ function createUser() {
     let group;
     let exercise;
     let exerciseType;
+    let set;
 
     Promise.all([
       User.create(MockData.user),
       Group.create(MockData.group),
       Exercise.create(MockData.exercise),
       ExerciseType.create(MockData.exerciseType),
+      Set.create(MockData.set),
     ])
       .then((values) => {
         user = values[0];
         group = values[1];
         exercise = values[2];
         exerciseType = values[3];
+        set = values[4];
 
         return exercise.setUser(user);
       })
       .then(() => group.addUser(user))
       .then(() => exercise.setExerciseType(exerciseType))
-      .then(() => resolve({ user, group, exercise, exerciseType }));
+      .then(() => set.setExercise(exercise))
+      .then(() => resolve({ user, group, exercise, exerciseType, sets: set }));
   });
 }
 
@@ -60,17 +65,16 @@ describe('User', () => {
           .end((err, res) => {
             res.should.have.status(200);
             res.should.be.json;
-
             res.body.should.be.a('object');
-            res.body.should.have.property('user');
 
-            res.body.user.should.be.a('object');
-            res.body.user.should.have.property('id');
-            res.body.user.id.should.equal(result.user.id);
-            res.body.user.should.have.property('name');
-            res.body.user.name.should.equal(result.user.name);
-            res.body.user.should.have.property('createdAt');
-            res.body.user.should.have.property('updatedAt');
+            res.body.should.have.property('id');
+            res.body.id.should.equal(result.user.id);
+
+            res.body.should.have.property('name');
+            res.body.name.should.equal(result.user.name);
+
+            res.body.should.have.property('createdAt');
+            res.body.should.have.property('updatedAt');
 
             done();
           });
@@ -86,16 +90,15 @@ describe('User', () => {
         .end((err, res) => {
           res.should.have.status(200);
           res.should.be.json;
-
           res.body.should.be.a('object');
-          res.body.should.have.property('user');
 
-          res.body.user.should.be.a('object');
-          res.body.user.should.have.property('id');
-          res.body.user.should.have.property('name');
-          res.body.user.should.have.property('createdAt');
-          res.body.user.should.have.property('updatedAt');
-          res.body.user.name.should.equal(MockData.user.name);
+          res.body.should.have.property('id');
+
+          res.body.should.have.property('name');
+          res.body.name.should.equal(MockData.user.name);
+
+          res.body.should.have.property('createdAt');
+          res.body.should.have.property('updatedAt');
 
           done();
         });
@@ -111,14 +114,16 @@ describe('User', () => {
           .end((err, res) => {
             res.should.have.status(200);
             res.should.be.json;
-
             res.body.should.be.a('object');
+
             res.body.should.have.property('id');
             res.body.id.should.equal(result.user.id);
+
             res.body.should.have.property('name');
+            res.body.name.should.equal('Updated');
+
             res.body.should.have.property('createdAt');
             res.body.should.have.property('updatedAt');
-            res.body.name.should.equal('Updated');
 
             done();
           });
@@ -132,7 +137,7 @@ describe('User', () => {
         chai.request(server)
           .delete(`/users/${result.user.id}`)
           .end((err, res) => {
-            res.should.have.status(200);
+            res.should.have.status(204);
 
             done();
           });
@@ -148,20 +153,16 @@ describe('User', () => {
           .end((err, res) => {
             res.should.have.status(200);
             res.should.be.json;
-
             res.body.should.be.a('array');
 
             res.body[0].should.be.a('object');
+
             res.body[0].should.have.property('id');
             res.body[0].id.should.equal(result.group.id);
+
             res.body[0].should.have.property('name');
             res.body[0].should.have.property('createdAt');
             res.body[0].should.have.property('updatedAt');
-            res.body[0].should.have.property('UserGroup');
-
-            res.body[0].UserGroup.should.be.a('object');
-            res.body[0].UserGroup.should.have.property('UserId');
-            res.body[0].UserGroup.UserId.should.equal(result.user.id);
 
             done();
           });
@@ -177,7 +178,6 @@ describe('User', () => {
           .end((err, res) => {
             res.should.have.status(200);
             res.should.be.json;
-
             res.body.should.be.a('array');
 
             res.body[0].should.be.a('object');
@@ -190,6 +190,9 @@ describe('User', () => {
 
             res.body[0].should.have.property('sets');
             res.body[0].sets.should.be.a('array');
+
+            res.body[0].should.have.property('createdAt');
+            res.body[0].should.have.property('updatedAt');
 
             res.body[0].should.have.property('user');
             res.body[0].user.should.be.a('object');
