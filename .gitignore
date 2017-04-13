@@ -1,5 +1,4 @@
 node_modules/
-doc/
 db-development.sqlite
 db-test.sqlite
 .DS_Store
