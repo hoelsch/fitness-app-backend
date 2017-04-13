@@ -159,7 +159,7 @@ router.post('/', (req, res) => {
 });
 
 /**
- * @api {patch} /exercise/:id Edit an exercise
+ * @api {patch} /exercises/:id Edit an exercise
  * @apiName PatchExercise
  * @apiGroup Exercise
  *
@@ -308,7 +308,7 @@ router.post('/:id/comments', (req, res) => {
 });
 
 /**
- * @api {patch} /exercise/:exercise-id/comments/:comment-id Edit a comment of an exercise
+ * @api {patch} /exercises/:exercise-id/comments/:comment-id Edit a comment of an exercise
  * @apiName PatchExerciseComment
  * @apiGroup Exercise
  *
