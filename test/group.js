@@ -138,6 +138,16 @@ describe('Group', () => {
           done();
         });
     });
+    it('should return 400 for invalid input data', function (done) {
+      chai.request(server)
+        .post('/groups')
+        .send({})
+        .end((err, res) => {
+          res.should.have.status(400);
+
+          done();
+        });
+    });
   });
 
   describe('PATCH /groups/:id', () => {
@@ -171,6 +181,18 @@ describe('Group', () => {
           .send({ name: 'Updated' })
           .end((err, res) => {
             res.should.have.status(404);
+
+            done();
+          });
+      });
+    });
+    it('should return 400 for invalid input data', function (done) {
+      createGroup().then((result) => {
+        chai.request(server)
+          .patch(`/groups/${result.group.id}`)
+          .send({})
+          .end((err, res) => {
+            res.should.have.status(400);
 
             done();
           });
@@ -242,7 +264,7 @@ describe('Group', () => {
       createGroup().then((result) => {
         chai.request(server)
           .post(`/groups/${result.group.id}/members`)
-          .send(MockData.user)
+          .send({ userId: result.user.id })
           .end((err, res) => {
             res.should.have.status(204);
 
@@ -251,14 +273,28 @@ describe('Group', () => {
       });
     });
     it('should return 404 for non-existing group', function (done) {
-      chai.request(server)
-        .post('/groups/-1/members')
-        .send(MockData.user)
-        .end((err, res) => {
-          res.should.have.status(404);
+      createGroup().then((result) => {
+        chai.request(server)
+          .post('/groups/-1/members')
+          .send({ userId: result.user.id })
+          .end((err, res) => {
+            res.should.have.status(404);
 
-          done();
-        });
+            done();
+          });
+      });
+    });
+    it('should return 400 for invalid input data', function (done) {
+      createGroup().then((result) => {
+        chai.request(server)
+          .post(`/groups/${result.group.id}/members`)
+          .send({})
+          .end((err, res) => {
+            res.should.have.status(400);
+
+            done();
+          });
+      });
     });
   });
 
