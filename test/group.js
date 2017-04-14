@@ -106,6 +106,15 @@ describe('Group', () => {
           });
       });
     });
+    it('should return 404 for non-existing group', function (done) {
+      chai.request(server)
+        .get('/groups/-1')
+        .end((err, res) => {
+          res.should.have.status(404);
+
+          done();
+        });
+    });
   });
 
   describe('POST /groups', () => {
@@ -155,6 +164,18 @@ describe('Group', () => {
           });
       });
     });
+    it('should return 404 for non-existing group', function (done) {
+      createGroup().then((result) => {
+        chai.request(server)
+          .patch('/groups/-1')
+          .send({ name: 'Updated' })
+          .end((err, res) => {
+            res.should.have.status(404);
+
+            done();
+          });
+      });
+    });
   });
 
   describe('DELETE /groups/:id', () => {
@@ -168,6 +189,15 @@ describe('Group', () => {
             done();
           });
       });
+    });
+    it('should return 404 for non-existing group', function (done) {
+      chai.request(server)
+        .delete('/groups/-1')
+        .end((err, res) => {
+          res.should.have.status(404);
+
+          done();
+        });
     });
   });
 
@@ -196,6 +226,15 @@ describe('Group', () => {
           });
       });
     });
+    it('should return 404 for non-existing group', function (done) {
+      chai.request(server)
+        .get('/groups/-1/members')
+        .end((err, res) => {
+          res.should.have.status(404);
+
+          done();
+        });
+    });
   });
 
   describe('POST /groups/:id/members', () => {
@@ -211,6 +250,16 @@ describe('Group', () => {
           });
       });
     });
+    it('should return 404 for non-existing group', function (done) {
+      chai.request(server)
+        .post('/groups/-1/members')
+        .send(MockData.user)
+        .end((err, res) => {
+          res.should.have.status(404);
+
+          done();
+        });
+    });
   });
 
   describe('DELETE /groups/:group-id/members/:user-id', () => {
@@ -220,6 +269,28 @@ describe('Group', () => {
           .delete(`/groups/${result.group.id}/members/${result.user.id}`)
           .end((err, res) => {
             res.should.have.status(204);
+
+            done();
+          });
+      });
+    });
+    it('should return 404 for non-existing group', function (done) {
+      createGroup().then((result) => {
+        chai.request(server)
+          .delete(`/groups/-1/members/${result.user.id}`)
+          .end((err, res) => {
+            res.should.have.status(404);
+
+            done();
+          });
+      });
+    });
+    it('should return 404 for non-existing user', function (done) {
+      createGroup().then((result) => {
+        chai.request(server)
+          .delete(`/groups/${result.group.id}/members/-1`)
+          .end((err, res) => {
+            res.should.have.status(404);
 
             done();
           });
@@ -273,6 +344,15 @@ describe('Group', () => {
             done();
           });
       });
+    });
+    it('should get the exercises of a group with a given id', function (done) {
+      chai.request(server)
+        .get('/groups/-1/exercises')
+        .end((err, res) => {
+          res.should.have.status(404);
+
+          done();
+        });
     });
   });
 });
