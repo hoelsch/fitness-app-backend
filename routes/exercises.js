@@ -66,13 +66,19 @@ router.get('/', (req, res) => {
  * @apiSuccess {String} createdAt Date of creation.
  * @apiSuccess {String} updatedAt Date of last update.
  */
-router.get('/:id', (req, res) => {
+router.get('/:id', (req, res, next) => {
   let exercise;
   let userOfExercise;
   let typeOfExercise;
 
   Exercise.find({ where: { id: req.params.id } })
     .then((foundExercise) => {
+      if (!foundExercise) {
+        const err = new Error('Exercise not found');
+        err.status = 404;
+        throw err;
+      }
+
       exercise = foundExercise;
       return exercise.getUser();
     })
@@ -95,7 +101,8 @@ router.get('/:id', (req, res) => {
       };
 
       res.json(result);
-    });
+    })
+    .catch(err => next(err));
 });
 
 /**
@@ -172,10 +179,19 @@ router.post('/', (req, res) => {
  * @apiSuccess {String} createdAt Date of creation.
  * @apiSuccess {String} updatedAt Date of last update.
  */
-router.patch('/:id', (req, res) => (
+router.patch('/:id', (req, res, next) => (
   Exercise.find({ where: { id: req.params.id } })
-    .then(exercise => exercise.update(req.body))
+    .then((exercise) => {
+      if (!exercise) {
+        const err = new Error('Exercise not found');
+        err.status = 404;
+        throw err;
+      }
+
+      return exercise.update(req.body);
+    })
     .then(() => res.sendStatus(204))
+    .catch(err => next(err))
 ));
 
 /**
@@ -183,10 +199,19 @@ router.patch('/:id', (req, res) => (
  * @apiName DeleteExercise
  * @apiGroup Exercise
  */
-router.delete('/:id', (req, res) => (
+router.delete('/:id', (req, res, next) => (
   Exercise.find({ where: { id: req.params.id } })
-    .then(exercise => exercise.destroy())
+    .then((exercise) => {
+      if (!exercise) {
+        const err = new Error('Exercise not found');
+        err.status = 404;
+        throw err;
+      }
+
+      return exercise.destroy();
+    })
     .then(() => res.sendStatus(204))
+    .catch(err => next(err))
 ));
 
 /**
@@ -202,10 +227,19 @@ router.delete('/:id', (req, res) => (
  * @apiSuccess {String} body.createdAt Date of creation.
  * @apiSuccess {String} body.updatedAt Date of last update.
  */
-router.get('/:id/sets', (req, res) => (
+router.get('/:id/sets', (req, res, next) => (
   Exercise.find({ where: { id: req.params.id } })
-    .then(exercise => exercise.getSets())
+    .then((exercise) => {
+      if (!exercise) {
+        const err = new Error('Exercise not found');
+        err.status = 404;
+        throw err;
+      }
+
+      return exercise.getSets();
+    })
     .then(sets => res.json(sets))
+    .catch(err => next(err))
 ));
 
 /**
@@ -216,16 +250,23 @@ router.get('/:id/sets', (req, res) => (
  * @apiParam {Number} numReps Number of reps.
  * @apiParam {Number} weight Weight.
  */
-router.post('/:id/sets', (req, res) => {
+router.post('/:id/sets', (req, res, next) => {
   let exercise;
 
   Exercise.find({ where: { id: req.params.id } })
     .then((exer) => {
+      if (!exer) {
+        const err = new Error('Exercise not found');
+        err.status = 404;
+        throw err;
+      }
+
       exercise = exer;
       return Set.create(req.body.set);
     })
     .then(set => set.setExercise(exercise))
-    .then(() => res.sendStatus(204));
+    .then(() => res.sendStatus(204))
+    .catch(err => next(err));
 });
 
 /**
@@ -233,10 +274,19 @@ router.post('/:id/sets', (req, res) => {
  * @apiName DeleteExerciseSet
  * @apiGroup Exercise
  */
-router.delete('/:exerciseId/sets/:setId', (req, res) => (
+router.delete('/:exerciseId/sets/:setId', (req, res, next) => (
   Set.find({ where: { id: req.params.setId } })
-    .then(set => set.destroy())
+    .then((set) => {
+      if (!set) {
+        const err = new Error('Set not found');
+        err.status = 404;
+        throw err;
+      }
+
+      return set.destroy();
+    })
     .then(() => res.sendStatus(204))
+    .catch(err => next(err))
 ));
 
 /**
@@ -247,10 +297,19 @@ router.delete('/:exerciseId/sets/:setId', (req, res) => (
  * @apiParam {Number} [numRep] Optional number of reps.
  * @apiParam {Number} [weight] Weight.
  */
-router.patch('/:exerciseId/sets/:setId', (req, res) => (
+router.patch('/:exerciseId/sets/:setId', (req, res, next) => (
   Set.find({ where: { id: req.params.setId } })
-    .then(set => set.update(req.body))
+    .then((set) => {
+      if (!set) {
+        const err = new Error('Set not found');
+        err.status = 404;
+        throw err;
+      }
+
+      return set.update(req.body);
+    })
     .then(() => res.sendStatus(204))
+    .catch(err => next(err))
 ));
 
 /**
@@ -265,11 +324,19 @@ router.patch('/:exerciseId/sets/:setId', (req, res) => (
  * @apiSuccess {String} body.createdAt Date of creation.
  * @apiSuccess {String} body.updatedAt Date of last update.
  */
-router.get('/:id/comments', (req, res) => {
+router.get('/:id/comments', (req, res, next) => {
   let commentsOfExercise;
 
   Exercise.find({ where: { id: req.params.id } })
-    .then(exercise => exercise.getComments())
+    .then((exercise) => {
+      if (!exercise) {
+        const err = new Error('Exercise not found');
+        err.status = 404;
+        throw err;
+      }
+
+      return exercise.getComments();
+    })
     .then((comments) => {
       commentsOfExercise = comments;
       return Promise.all(comments.map(comment => comment.getUser()));
@@ -283,7 +350,8 @@ router.get('/:id/comments', (req, res) => {
         user: users[index],
       })))
     ))
-    .then(result => res.json(result));
+    .then(result => res.json(result))
+    .catch(err => next(err));
 });
 
 /**
@@ -294,17 +362,37 @@ router.get('/:id/comments', (req, res) => {
  * @apiParam {String} text Text of the comment.
  * @apiParam {Number} userId ID of the user posting the comment.
  */
-router.post('/:id/comments', (req, res) => {
+router.post('/:id/comments', (req, res, next) => {
+  let exercise;
   let comment;
 
-  Comment.create({ text: req.body.text })
+  Exercise.find({ where: { id: req.params.id } })
+    .then((exer) => {
+      if (!exer) {
+        const err = new Error('Exercise not found');
+        err.status = 404;
+        throw err;
+      }
+
+      exercise = exer;
+      return User.find({ where: { id: req.body.userId } });
+    })
+    .then((user) => {
+      if (!user) {
+        const err = new Error('User not found');
+        err.status = 404;
+        throw err;
+      }
+
+      return Comment.create({ text: req.body.text });
+    })
     .then((newComment) => {
       comment = newComment;
-      return Exercise.find({ where: { id: req.params.id } });
+      return comment.setExercise(exercise);
     })
-    .then(exercise => comment.setExercise(exercise))
     .then(() => comment.setUser(req.body.userId))
-    .then(() => res.sendStatus(204));
+    .then(() => res.sendStatus(204))
+    .catch(err => next(err));
 });
 
 /**
@@ -314,10 +402,19 @@ router.post('/:id/comments', (req, res) => {
  *
  * @apiParam {String} text Text of the comment.
  */
-router.patch('/:exerciseId/comments/:commentId', (req, res) => (
+router.patch('/:exerciseId/comments/:commentId', (req, res, next) => (
   Comment.find({ where: { id: req.params.commentId } })
-    .then(comment => comment.update({ text: req.body.text }))
+    .then((comment) => {
+      if (!comment) {
+        const err = new Error('Comment not found');
+        err.status = 404;
+        throw err;
+      }
+
+      return comment.update({ text: req.body.text });
+    })
     .then(() => res.sendStatus(204))
+    .catch(err => next(err))
 ));
 
 /**
@@ -325,10 +422,19 @@ router.patch('/:exerciseId/comments/:commentId', (req, res) => (
  * @apiName DeleteExerciseComment
  * @apiGroup Exercise
  */
-router.delete('/:exerciseId/comments/:commentId', (req, res) => (
+router.delete('/:exerciseId/comments/:commentId', (req, res, next) => (
   Comment.find({ where: { id: req.params.commentId } })
-    .then(comment => comment.destroy())
+    .then((comment) => {
+      if (!comment) {
+        const err = new Error('Comment not found');
+        err.status = 404;
+        throw err;
+      }
+
+      return comment.destroy();
+    })
     .then(() => res.sendStatus(204))
+    .catch(err => next(err))
 ));
 
 module.exports = router;
