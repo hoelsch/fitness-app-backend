@@ -1,5 +1,6 @@
 const express = require('express');
 const Group = require('../models').Group;
+const User = require('../models').User;
 
 const router = express.Router();
 
@@ -28,8 +29,17 @@ router.get('/', (req, res) => (
  * @apiSuccess {String} createdAt Date of creation.
  * @apiSuccess {String} updatedAt Date of last update.
  */
-router.get('/:id', (req, res) => (
-  Group.find({ where: { id: req.params.id } }).then(group => res.json(group))
+router.get('/:id', (req, res, next) => (
+  Group.find({ where: { id: req.params.id } })
+    .then((group) => {
+      if (group) {
+        res.json(group);
+      } else {
+        const err = new Error('Group not found');
+        err.status = 404;
+        next(err);
+      }
+    })
 ));
 
 /**
@@ -60,10 +70,19 @@ router.post('/', (req, res) => (
  * @apiSuccess {String} createdAt Date of creation.
  * @apiSuccess {String} updatedAt Date of last update.
  */
-router.patch('/:id', (req, res) => (
+router.patch('/:id', (req, res, next) => (
   Group.find({ where: { id: req.params.id } })
-    .then(group => group.update(req.body))
+    .then((group) => {
+      if (!group) {
+        const err = new Error('Group not found');
+        err.status = 404;
+        next(err);
+      }
+
+      return group.update(req.body);
+    })
     .then(group => res.json(group))
+    .catch(err => next(err))
 ));
 
 /**
@@ -71,10 +90,19 @@ router.patch('/:id', (req, res) => (
  * @apiName DeleteGroup
  * @apiGroup Group
  */
-router.delete('/:id', (req, res) => (
+router.delete('/:id', (req, res, next) => (
   Group.find({ where: { id: req.params.id } })
-    .then(group => group.destroy())
+    .then((group) => {
+      if (!group) {
+        const err = new Error('Group not found');
+        err.status = 404;
+        next(err);
+      }
+
+      return group.destroy();
+    })
     .then(() => res.sendStatus(204))
+    .catch(err => next(err))
 ));
 
 /**
@@ -88,15 +116,24 @@ router.delete('/:id', (req, res) => (
  * @apiSuccess {String} body.createdAt Date of creation.
  * @apiSuccess {String} body.updatedAt Date of last update.
  */
-router.get('/:id/members', (req, res) => (
+router.get('/:id/members', (req, res, next) => (
   Group.find({ where: { id: req.params.id } })
-    .then(group => group.getUsers())
+    .then((group) => {
+      if (!group) {
+        const err = new Error('Group not found');
+        err.status = 404;
+        next(err);
+      }
+
+      return group.getUsers();
+    })
     .then(members => res.json(members.map(member => ({
       id: member.id,
       name: member.name,
       createdAt: member.createdAt,
       updatedAt: member.updatedAt,
     }))))
+    .catch(err => next(err))
 ));
 
 /**
@@ -106,10 +143,19 @@ router.get('/:id/members', (req, res) => (
  *
  * @apiParam {Number} id ID of the user.
  */
-router.post('/:id/members', (req, res) => (
+router.post('/:id/members', (req, res, next) => (
   Group.find({ where: { id: req.params.id } })
-    .then(group => group.addUser(req.body.userId))
+    .then((group) => {
+      if (!group) {
+        const err = new Error('Group not found');
+        err.status = 404;
+        next(err);
+      }
+
+      return group.addUser(req.body.userId);
+    })
     .then(() => res.sendStatus(204))
+    .catch(err => next(err))
 ));
 
 /**
@@ -117,11 +163,32 @@ router.post('/:id/members', (req, res) => (
  * @apiName DeleteGroupMember
  * @apiGroup Group
  */
-router.delete('/:groupId/members/:userId', (req, res) => (
+router.delete('/:groupId/members/:userId', (req, res, next) => {
+  let group;
+
   Group.find({ where: { id: req.params.groupId } })
-    .then(group => group.removeUser(req.params.userId))
+    .then((foundGroup) => {
+      if (!foundGroup) {
+        const err = new Error('Group not found');
+        err.status = 404;
+        next(err);
+      }
+
+      group = foundGroup;
+      return User.find({ where: { id: req.params.userId } });
+    })
+    .then((user) => {
+      if (!user) {
+        const err = new Error('User not found');
+        err.status = 404;
+        next(err);
+      }
+
+      return group.removeUser(req.params.userId);
+    })
     .then(() => res.sendStatus(204))
-));
+    .catch(err => next(err));
+});
 
 /**
  * @api {get} /groups/:id/exercises List exercises of a group
@@ -137,14 +204,22 @@ router.delete('/:groupId/members/:userId', (req, res) => (
  * @apiSuccess {String} body.createdAt Date of creation.
  * @apiSuccess {String} body.updatedAt Date of last update.
  */
-router.get('/:id/exercises', (req, res) => {
+router.get('/:id/exercises', (req, res, next) => {
   const exercises = [];
   let exerciseTypes;
   let users;
   let sets;
 
   Group.find({ where: { id: req.params.id } })
-    .then(group => group.getUsers())
+    .then((group) => {
+      if (!group) {
+        const err = new Error('Group not found');
+        err.status = 404;
+        next(err);
+      }
+
+      return group.getUsers();
+    })
     .then((usersOfGroup) => {
       users = usersOfGroup;
       if (users.length === 0) {
@@ -180,7 +255,8 @@ router.get('/:id/exercises', (req, res) => {
         exerciseType: exerciseTypes[index],
       })));
     })
-    .then(result => res.json(result));
+    .then(result => res.json(result))
+    .catch(err => next(err));
 });
 
 module.exports = router;
