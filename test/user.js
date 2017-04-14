@@ -46,19 +46,19 @@ function createUser() {
 }
 
 describe('User', () => {
-  after(function(done) {
+  after(function (done) {
     Group.destroy({ where: {} })
       .then(() => Exercise.destroy({ where: {} }))
       .then(() => ExerciseType.destroy({ where: {} }))
       .then(() => done());
   });
 
-  afterEach(function(done) {
+  afterEach(function (done) {
     User.destroy({ where: {} }).then(() => done());
   });
 
   describe('GET /users/:id', () => {
-    it('should get an user with a given id', function(done) {
+    it('should get an user with a given id', function (done) {
       createUser().then((result) => {
         chai.request(server)
           .get(`/users/${result.user.id}`)
@@ -80,10 +80,19 @@ describe('User', () => {
           });
       });
     });
+    it('should return 404 for non-existing user', function (done) {
+      chai.request(server)
+        .get('/users/-1')
+        .end((err, res) => {
+          res.should.have.status(404);
+
+          done();
+        });
+    });
   });
 
   describe('POST /users', () => {
-    it('should add an user', function(done) {
+    it('should add an user', function (done) {
       chai.request(server)
         .post('/users')
         .send(MockData.user)
@@ -106,7 +115,7 @@ describe('User', () => {
   });
 
   describe('PATCH /users/:id', () => {
-    it('should update user with a given id', function(done) {
+    it('should update user with a given id', function (done) {
       createUser().then((result) => {
         chai.request(server)
           .patch(`/users/${result.user.id}`)
@@ -129,10 +138,20 @@ describe('User', () => {
           });
       });
     });
+    it('should return 404 for non-existing user', function (done) {
+      chai.request(server)
+        .patch('/users/-1')
+        .send({ name: 'Updated' })
+        .end((err, res) => {
+          res.should.have.status(404);
+
+          done();
+        });
+    });
   });
 
   describe('DELETE /users/:id', () => {
-    it('should delete user with a given id', function(done) {
+    it('should delete user with a given id', function (done) {
       createUser().then((result) => {
         chai.request(server)
           .delete(`/users/${result.user.id}`)
@@ -143,10 +162,19 @@ describe('User', () => {
           });
       });
     });
+    it('should return 404 for non-existing user', function (done) {
+      chai.request(server)
+        .delete('/users/-1')
+        .end((err, res) => {
+          res.should.have.status(404);
+
+          done();
+        });
+    });
   });
 
   describe('GET /users/:id/groups', () => {
-    it('should get the groups of an user with a given id', function(done) {
+    it('should get the groups of an user with a given id', function (done) {
       createUser().then((result) => {
         chai.request(server)
           .get(`/users/${result.user.id}/groups`)
@@ -168,10 +196,19 @@ describe('User', () => {
           });
       });
     });
+    it('should return 404 for non-existing user', function (done) {
+      chai.request(server)
+        .get('/users/-1/groups')
+        .end((err, res) => {
+          res.should.have.status(404);
+
+          done();
+        });
+    });
   });
 
   describe('GET /users/:id/exercises', () => {
-    it('should list all exercises of an user with a given id', function(done) {
+    it('should list all exercises of an user with a given id', function (done) {
       createUser().then((result) => {
         chai.request(server)
           .get(`/users/${result.user.id}/exercises`)
@@ -211,6 +248,15 @@ describe('User', () => {
             done();
           });
       });
+    });
+    it('should return 404 for non-existing user', function (done) {
+      chai.request(server)
+        .get('/users/-1/exercises')
+        .end((err, res) => {
+          res.should.have.status(404);
+
+          done();
+        });
     });
   });
 });
