@@ -177,6 +177,18 @@ describe('Exercise', () => {
           });
       });
     });
+    it('should return 400 for invalid input data', function (done) {
+      User.create(MockData.user).then(() => {
+        chai.request(server)
+          .post('/exercises')
+          .send({})
+          .end((err, res) => {
+            res.should.have.status(400);
+
+            done();
+          });
+      });
+    });
   });
 
   describe('PATCH /exercises/:id', () => {
@@ -201,6 +213,18 @@ describe('Exercise', () => {
 
           done();
         });
+    });
+    it('should return 400 for invalid input data', function (done) {
+      createExercise().then((result) => {
+        chai.request(server)
+          .patch(`/exercises/${result.exercise.id}`)
+          .send({ invalidAttribute: 'value' })
+          .end((err, res) => {
+            res.should.have.status(400);
+
+            done();
+          });
+      });
     });
   });
 
@@ -285,6 +309,18 @@ describe('Exercise', () => {
           done();
         });
     });
+    it('should return 400 for invalid input data', function (done) {
+      createExercise().then((result) => {
+        chai.request(server)
+          .post(`/exercises/${result.exercise.id}/sets`)
+          .send({})
+          .end((err, res) => {
+            res.should.have.status(400);
+
+            done();
+          });
+      });
+    });
   });
 
   describe('DELETE /exercises/:exercise-id/sets/:set-id', () => {
@@ -332,6 +368,18 @@ describe('Exercise', () => {
 
           done();
         });
+    });
+    it('should return 400 for invalid input data', function (done) {
+      createExercise().then((result) => {
+        chai.request(server)
+          .patch(`/exercises/${result.exercise.id}/sets/${result.set.id}`)
+          .send({ invalidAttribute: 'value' })
+          .end((err, res) => {
+            res.should.have.status(400);
+
+            done();
+          });
+      });
     });
   });
 
@@ -412,6 +460,18 @@ describe('Exercise', () => {
           });
       });
     });
+    it('should return 400 for invalid input data', function (done) {
+      createExercise().then((result) => {
+        chai.request(server)
+          .post(`/exercises/${result.exercise.id}/comments`)
+          .send({})
+          .end((err, res) => {
+            res.should.have.status(400);
+
+            done();
+          });
+      });
+    });
   });
 
   describe('PATCH /exercises/:exercise-id/comments/:comment-id', () => {
@@ -419,7 +479,7 @@ describe('Exercise', () => {
       createExercise().then((result) => {
         chai.request(server)
           .patch(`/exercises/${result.exercise.id}/comments/${result.comment.id}`)
-          .send(result.comment.text)
+          .send({ text: result.comment.text })
           .end((err, res) => {
             res.should.have.status(204);
 
@@ -436,6 +496,18 @@ describe('Exercise', () => {
 
           done();
         });
+    });
+    it('should return 400 for invalid input data', function (done) {
+      createExercise().then((result) => {
+        chai.request(server)
+          .patch(`/exercises/${result.exercise.id}/comments/${result.comment.id}`)
+          .send({})
+          .end((err, res) => {
+            res.should.have.status(400);
+
+            done();
+          });
+      });
     });
   });
 
