@@ -112,6 +112,26 @@ describe('User', () => {
           done();
         });
     });
+    it('should return 400 for invalid input', function (done) {
+      chai.request(server)
+        .post('/users')
+        .send(MockData.user)
+        .end((err, res) => {
+          res.should.have.status(200);
+          res.should.be.json;
+          res.body.should.be.a('object');
+
+          res.body.should.have.property('id');
+
+          res.body.should.have.property('name');
+          res.body.name.should.equal(MockData.user.name);
+
+          res.body.should.have.property('createdAt');
+          res.body.should.have.property('updatedAt');
+
+          done();
+        });
+    });
   });
 
   describe('PATCH /users/:id', () => {
@@ -147,6 +167,18 @@ describe('User', () => {
 
           done();
         });
+    });
+    it('should return 400 for invalid input', function (done) {
+      createUser().then((result) => {
+        chai.request(server)
+          .patch(`/users/${result.user.id}`)
+          .send({})
+          .end((err, res) => {
+            res.should.have.status(400);
+            
+            done();
+          });
+      });
     });
   });
 
