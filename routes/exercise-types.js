@@ -1,5 +1,6 @@
 const express = require('express');
 const ExerciseType = require('../models').ExerciseType;
+const Joi = require('joi');
 
 const router = express.Router();
 
@@ -53,9 +54,20 @@ router.get('/:id', (req, res, next) => (
  * @apiSuccess {String} createdAt Date of creation.
  * @apiSuccess {String} updatedAt Date of last update.
  */
-router.post('/', (req, res) => (
-  ExerciseType.create({ name: req.body.name }).then(exerciseType => res.json(exerciseType))
-));
+router.post('/', (req, res, next) => {
+  const { error } = Joi.validate(req.body, {
+    name: Joi.string().required(),
+  });
+
+  if (error) {
+    const err = new Error('Invalid request body');
+    err.status = 400;
+    next(err);
+  } else {
+    ExerciseType.create({ name: req.body.name })
+      .then(exerciseType => res.json(exerciseType));
+  }
+});
 
 /**
  * @api {patch} /exercise-types/:id Edit an exercise type
@@ -69,20 +81,30 @@ router.post('/', (req, res) => (
  * @apiSuccess {String} createdAt Date of creation.
  * @apiSuccess {String} updatedAt Date of last update.
  */
-router.patch('/:id', (req, res, next) => (
-  ExerciseType.find({ where: { id: req.params.id } })
-    .then((exerciseType) => {
-      if (!exerciseType) {
-        const err = new Error('Exercise type not found');
-        err.status = 404;
-        throw err;
-      }
+router.patch('/:id', (req, res, next) => {
+  const { error } = Joi.validate(req.body, {
+    name: Joi.string().required(),
+  });
 
-      return exerciseType.update(req.body);
-    })
-    .then(updatedExerciseType => res.json(updatedExerciseType))
-    .catch(err => next(err))
-));
+  if (error) {
+    const err = new Error('Invalid request body');
+    err.status = 400;
+    next(err);
+  } else {
+    ExerciseType.find({ where: { id: req.params.id } })
+      .then((exerciseType) => {
+        if (!exerciseType) {
+          const err = new Error('Exercise type not found');
+          err.status = 404;
+          throw err;
+        }
+
+        return exerciseType.update(req.body);
+      })
+      .then(updatedExerciseType => res.json(updatedExerciseType))
+      .catch(err => next(err));
+  }
+});
 
 /**
  * @api {delete} /exercise-types/:id Delete an exercise type
