@@ -49,7 +49,7 @@ function createExercise() {
 }
 
 describe('Exercise', () => {
-  after(function(done) {
+  after(function (done) {
     ExerciseType.destroy({ where: {} })
       .then(() => Set.destroy({ where: {} }))
       .then(() => User.destroy({ where: {} }))
@@ -57,12 +57,12 @@ describe('Exercise', () => {
       .then(() => done());
   });
 
-  afterEach(function(done) {
+  afterEach(function (done) {
     Exercise.destroy({ where: {} }).then(() => done());
   });
 
   describe('GET /exercises', () => {
-    it('should get all exercises', function(done) {
+    it('should get all exercises', function (done) {
       createExercise().then((result) => {
         chai.request(server)
           .get('/exercises')
@@ -97,7 +97,7 @@ describe('Exercise', () => {
   });
 
   describe('GET /exercises/:id', () => {
-    it('should get an exercise with a given id', function(done) {
+    it('should get an exercise with a given id', function (done) {
       createExercise().then((result) => {
         chai.request(server)
           .get(`/exercises/${result.exercise.id}`)
@@ -129,10 +129,19 @@ describe('Exercise', () => {
           });
       });
     });
+    it('should return 404 for non-existing exercise', function (done) {
+      chai.request(server)
+        .get('/exercises/-1')
+        .end((err, res) => {
+          res.should.have.status(404);
+
+          done();
+        });
+    });
   });
 
   describe('POST /exercises', () => {
-    it('should add an exercise', function(done) {
+    it('should add an exercise', function (done) {
       User.create(MockData.user).then((user) => {
         chai.request(server)
           .post('/exercises')
@@ -171,7 +180,7 @@ describe('Exercise', () => {
   });
 
   describe('PATCH /exercises/:id', () => {
-    it('should update exercise with a given id', function(done) {
+    it('should update exercise with a given id', function (done) {
       createExercise().then((result) => {
         chai.request(server)
           .patch(`/exercises/${result.exercise.id}`)
@@ -183,10 +192,20 @@ describe('Exercise', () => {
           });
       });
     });
+    it('should return 404 for non-existing exercise', function (done) {
+      chai.request(server)
+        .patch('/exercises/-1')
+        .send({ note: 'Updated' })
+        .end((err, res) => {
+          res.should.have.status(404);
+
+          done();
+        });
+    });
   });
 
   describe('DELETE /exercises/:id', () => {
-    it('should delete exercise with a given id', function(done) {
+    it('should delete exercise with a given id', function (done) {
       createExercise().then((result) => {
         chai.request(server)
           .delete(`/exercises/${result.exercise.id}`)
@@ -197,10 +216,21 @@ describe('Exercise', () => {
           });
       });
     });
+    it('should return 404 for non-existing exercise', function (done) {
+      createExercise().then((result) => {
+        chai.request(server)
+          .delete('/exercises/-1')
+          .end((err, res) => {
+            res.should.have.status(404);
+
+            done();
+          });
+      });
+    });
   });
 
   describe('GET /exercises/:id/sets', () => {
-    it('should get sets of exercise with a given id', function(done) {
+    it('should get sets of exercise with a given id', function (done) {
       createExercise().then((result) => {
         chai.request(server)
           .get(`/exercises/${result.exercise.id}/sets`)
@@ -219,10 +249,21 @@ describe('Exercise', () => {
           });
       });
     });
+    it('should return 404 for non-existing exercise', function (done) {
+      createExercise().then((result) => {
+        chai.request(server)
+          .get('/exercises/-1/sets')
+          .end((err, res) => {
+            res.should.have.status(404);
+
+            done();
+          });
+      });
+    });
   });
 
   describe('POST /exercises/:id/sets', () => {
-    it('should add a set to an exercise with a given id', function(done) {
+    it('should add a set to an exercise with a given id', function (done) {
       createExercise().then((result) => {
         chai.request(server)
           .post(`/exercises/${result.exercise.id}/sets`)
@@ -234,10 +275,20 @@ describe('Exercise', () => {
           });
       });
     });
+    it('should return 404 for non-existing exercise', function (done) {
+      chai.request(server)
+        .post('/exercises/-1/sets')
+        .send({ numReps: 1, weight: 1 })
+        .end((err, res) => {
+          res.should.have.status(404);
+
+          done();
+        });
+    });
   });
 
   describe('DELETE /exercises/:exercise-id/sets/:set-id', () => {
-    it('should delete a set of an exercise with a given id', function(done) {
+    it('should delete a set of an exercise with a given id', function (done) {
       createExercise().then((result) => {
         chai.request(server)
           .delete(`/exercises/${result.exercise.id}/sets/${result.set.id}`)
@@ -248,10 +299,19 @@ describe('Exercise', () => {
           });
       });
     });
+    it('should return 404 for non-existing set', function (done) {
+      chai.request(server)
+        .delete('/exercises/-1/sets/-1')
+        .end((err, res) => {
+          res.should.have.status(404);
+
+          done();
+        });
+    });
   });
 
   describe('PATCH /exercises/:exercise-id/sets/:set-id', () => {
-    it('should update a set of an exercise with a given id', function(done) {
+    it('should update a set of an exercise with a given id', function (done) {
       createExercise().then((result) => {
         chai.request(server)
           .patch(`/exercises/${result.exercise.id}/sets/${result.set.id}`)
@@ -263,10 +323,20 @@ describe('Exercise', () => {
           });
       });
     });
+    it('should return 404 for non-existing set', function (done) {
+      chai.request(server)
+        .patch('/exercises/-1/sets/-1')
+        .send({ numReps: 1, weight: 1 })
+        .end((err, res) => {
+          res.should.have.status(404);
+
+          done();
+        });
+    });
   });
 
   describe('GET /exercises/:id/comments', () => {
-    it('should get comments of an exercise with a given id', function(done) {
+    it('should get comments of an exercise with a given id', function (done) {
       createExercise().then((result) => {
         chai.request(server)
           .get(`/exercises/${result.exercise.id}/comments`)
@@ -294,16 +364,49 @@ describe('Exercise', () => {
           });
       });
     });
+    it('should return 404 for non-existing exercise', function (done) {
+      chai.request(server)
+        .get('/exercises/-1/comments')
+        .end((err, res) => {
+          res.should.have.status(404);
+
+          done();
+        });
+    });
   });
 
   describe('POST /exercises/:id/comments', () => {
-    it('should add a comment to an exercise with a given id', function(done) {
+    it('should add a comment to an exercise with a given id', function (done) {
       createExercise().then((result) => {
         chai.request(server)
           .post(`/exercises/${result.exercise.id}/comments`)
-          .send(result.comment.text)
+          .send({ text: result.comment.text, userId: result.user.id })
           .end((err, res) => {
             res.should.have.status(204);
+
+            done();
+          });
+      });
+    });
+    it('should return 404 for non-existing exercise', function (done) {
+      createExercise().then((result) => {
+        chai.request(server)
+          .post('/exercises/-1/comments')
+          .send({ text: result.comment.text, userId: result.user.id })
+          .end((err, res) => {
+            res.should.have.status(404);
+
+            done();
+          });
+      });
+    });
+    it('should return 404 for non-existing user', function (done) {
+      createExercise().then((result) => {
+        chai.request(server)
+          .post(`/exercises/${result.exercise.id}/comments`)
+          .send({ text: result.comment.text, userId: -1 })
+          .end((err, res) => {
+            res.should.have.status(404);
 
             done();
           });
@@ -312,7 +415,7 @@ describe('Exercise', () => {
   });
 
   describe('PATCH /exercises/:exercise-id/comments/:comment-id', () => {
-    it('should update a comment of an exercise with a given id', function(done) {
+    it('should update a comment of an exercise with a given id', function (done) {
       createExercise().then((result) => {
         chai.request(server)
           .patch(`/exercises/${result.exercise.id}/comments/${result.comment.id}`)
@@ -324,10 +427,20 @@ describe('Exercise', () => {
           });
       });
     });
+    it('should return 404 for non-existing comment', function (done) {
+      chai.request(server)
+        .patch('/exercises/-1/comments/-1')
+        .send({ text: 'Text' })
+        .end((err, res) => {
+          res.should.have.status(404);
+
+          done();
+        });
+    });
   });
 
   describe('DELETE /exercises/:exercise-id/comments/:comment-id', () => {
-    it('should delete a comment of an exercise with a given id', function(done) {
+    it('should delete a comment of an exercise with a given id', function (done) {
       createExercise().then((result) => {
         chai.request(server)
           .delete(`/exercises/${result.exercise.id}/comments/${result.comment.id}`)
@@ -337,6 +450,15 @@ describe('Exercise', () => {
             done();
           });
       });
+    });
+    it('should return 404 for non-existing comment', function (done) {
+      chai.request(server)
+        .delete('/exercises/-1/comments/-1')
+        .end((err, res) => {
+          res.should.have.status(404);
+
+          done();
+        });
     });
   });
 });
