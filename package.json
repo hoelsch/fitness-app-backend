@@ -12,6 +12,7 @@
     "body-parser": "~1.15.2",
     "debug": "~2.2.0",
     "express": "~4.14.0",
+    "joi": "^10.4.1",
     "morgan": "~1.7.0",
     "sequelize": "^3.30.3",
     "sequelize-cli": "^2.7.0",
