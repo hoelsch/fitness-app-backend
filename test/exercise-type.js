@@ -68,7 +68,7 @@ describe('ExerciseType', () => {
       });
     });
 
-    it('should return 404 for non-existing resource', function (done) {
+    it('should return 404 for non-existing exercise type', function (done) {
       chai.request(server)
         .get('/exercise-types/-1')
         .end((err, res) => {
@@ -121,6 +121,17 @@ describe('ExerciseType', () => {
             done();
           });
       });
+    });
+
+    it('should return 404 for non-existing exercise type', function (done) {
+      chai.request(server)
+        .patch('/exercise-types/-1')
+        .send({ name: 'Updated' })
+        .end((err, res) => {
+          res.should.have.status(404);
+
+          done();
+        });
     });
   });
 
