@@ -34,7 +34,7 @@ router.get('/:id', (req, res, next) => (
       if (exerciseType) {
         res.json(exerciseType);
       } else {
-        const err = new Error('Not Found');
+        const err = new Error('Exercise type not found');
         err.status = 404;
         next(err);
       }
@@ -76,7 +76,7 @@ router.patch('/:id', (req, res, next) => (
         return exerciseType.update(req.body);
       }
 
-      const err = new Error('Not Found');
+      const err = new Error('Exercise type not found');
       err.status = 404;
       throw err;
     })
@@ -96,7 +96,7 @@ router.delete('/:id', (req, res, next) => (
         return exerciseType.destroy();
       }
 
-      const err = new Error('Not Found');
+      const err = new Error('Exercise type not found');
       err.status = 404;
       throw err;
     })
