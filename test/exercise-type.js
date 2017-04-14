@@ -67,7 +67,6 @@ describe('ExerciseType', () => {
           });
       });
     });
-
     it('should return 404 for non-existing exercise type', function (done) {
       chai.request(server)
         .get('/exercise-types/-1')
@@ -98,6 +97,16 @@ describe('ExerciseType', () => {
           done();
         });
     });
+    it('should return 400 if exercise type name is not included in request body', function (done) {
+      chai.request(server)
+        .post('/exercise-types')
+        .send({})
+        .end((err, res) => {
+          res.should.have.status(400);
+
+          done();
+        });
+    });
   });
 
   describe('PATCH /exercise-types/:id', () => {
@@ -122,7 +131,6 @@ describe('ExerciseType', () => {
           });
       });
     });
-
     it('should return 404 for non-existing exercise type', function (done) {
       chai.request(server)
         .patch('/exercise-types/-1')
@@ -132,6 +140,18 @@ describe('ExerciseType', () => {
 
           done();
         });
+    });
+    it('should return 400 if exercise type name is not included in request body', function (done) {
+      createExerciseType().then((exerciseType) => {
+        chai.request(server)
+          .patch(`/exercise-types/${exerciseType.id}`)
+          .send({})
+          .end((err, res) => {
+            res.should.have.status(400);
+
+            done();
+          });
+      });
     });
   });
 
@@ -147,7 +167,6 @@ describe('ExerciseType', () => {
           });
       });
     });
-
     it('should return 404 for non-existing exercise type', function (done) {
       chai.request(server)
         .delete('/exercise-types/-1')
