@@ -15,12 +15,12 @@ function createExerciseType() {
 }
 
 describe('ExerciseType', () => {
-  afterEach(function(done) {
+  afterEach(function (done) {
     ExerciseType.destroy({ where: {} }).then(() => done());
   });
 
   describe('GET /exercise-types', () => {
-    it('should list all exercise-types', function(done) {
+    it('should list all exercise-types', function (done) {
       createExerciseType().then((exerciseType) => {
         chai.request(server)
           .get('/exercise-types')
@@ -45,7 +45,7 @@ describe('ExerciseType', () => {
   });
 
   describe('GET /exercise-types/:id', () => {
-    it('should get an exercise type with a given id', function(done) {
+    it('should get an exercise type with a given id', function (done) {
       createExerciseType().then((exerciseType) => {
         chai.request(server)
           .get(`/exercise-types/${exerciseType.id}`)
@@ -67,10 +67,20 @@ describe('ExerciseType', () => {
           });
       });
     });
+
+    it('should return 404 for non-existing resource', function (done) {
+      chai.request(server)
+        .get('/exercise-types/-1')
+        .end((err, res) => {
+          res.should.have.status(404);
+
+          done();
+        });
+    });
   });
 
   describe('POST /exercise-types', () => {
-    it('should add an exercise-type', function(done) {
+    it('should add an exercise-type', function (done) {
       chai.request(server)
         .post('/exercise-types')
         .send(MockData.exerciseType)
@@ -91,7 +101,7 @@ describe('ExerciseType', () => {
   });
 
   describe('PATCH /exercise-types/:id', () => {
-    it('should update exercise-type with a given id', function(done) {
+    it('should update exercise-type with a given id', function (done) {
       createExerciseType().then((exerciseType) => {
         chai.request(server)
           .patch(`/exercise-types/${exerciseType.id}`)
@@ -115,7 +125,7 @@ describe('ExerciseType', () => {
   });
 
   describe('DELETE /exercise-types/:id', () => {
-    it('should delete exercise-type with a given id', function(done) {
+    it('should delete exercise-type with a given id', function (done) {
       createExerciseType().then((exerciseType) => {
         chai.request(server)
           .delete(`/exercise-types/${exerciseType.id}`)

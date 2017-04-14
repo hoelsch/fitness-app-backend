@@ -28,9 +28,17 @@ router.get('/', (req, res) => (
  * @apiSuccess {String} createdAt Date of creation.
  * @apiSuccess {String} updatedAt Date of last update.
  */
-router.get('/:id', (req, res) => (
+router.get('/:id', (req, res, next) => (
   ExerciseType.find({ where: { id: req.params.id } })
-    .then(exerciseType => res.json(exerciseType))
+    .then((exerciseType) => {
+      if (exerciseType) {
+        res.json(exerciseType);
+      } else {
+        const err = new Error('Not Found');
+        err.status = 404;
+        next(err);
+      }
+    })
 ));
 
 /**
