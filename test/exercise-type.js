@@ -147,5 +147,15 @@ describe('ExerciseType', () => {
           });
       });
     });
+
+    it('should return 404 for non-existing exercise type', function (done) {
+      chai.request(server)
+        .delete('/exercise-types/-1')
+        .end((err, res) => {
+          res.should.have.status(404);
+
+          done();
+        });
+    });
   });
 });
