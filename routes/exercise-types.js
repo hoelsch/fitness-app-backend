@@ -69,10 +69,19 @@ router.post('/', (req, res) => (
  * @apiSuccess {String} createdAt Date of creation.
  * @apiSuccess {String} updatedAt Date of last update.
  */
-router.patch('/:id', (req, res) => (
+router.patch('/:id', (req, res, next) => (
   ExerciseType.find({ where: { id: req.params.id } })
-    .then(exerciseType => exerciseType.update(req.body))
+    .then((exerciseType) => {
+      if (exerciseType) {
+        return exerciseType.update(req.body);
+      }
+
+      const err = new Error('Not Found');
+      err.status = 404;
+      throw err;
+    })
     .then(updatedExerciseType => res.json(updatedExerciseType))
+    .catch(err => next(err))
 ));
 
 /**
