@@ -1,4 +1,5 @@
 const express = require('express');
+const Joi = require('joi');
 const User = require('../models').User;
 
 const router = express.Router();
@@ -38,9 +39,19 @@ router.get('/:id', (req, res, next) => (
  * @apiSuccess {String} createdAt Date of creation.
  * @apiSuccess {String} updatedAt Date of last update.
  */
-router.post('/', (req, res) => (
-  User.create({ name: req.body.name }).then(user => res.json(user))
-));
+router.post('/', (req, res, next) => {
+  const { error } = Joi.validate(req.body, {
+    name: Joi.string().required(),
+  });
+
+  if (error) {
+    const err = new Error('Invalid request body');
+    err.status = 400;
+    next(err);
+  } else {
+    User.create({ name: req.body.name }).then(user => res.json(user));
+  }
+});
 
 /**
  * @api {patch} /users/:id Edit an user
@@ -54,20 +65,30 @@ router.post('/', (req, res) => (
  * @apiSuccess {String} createdAt Date of creation.
  * @apiSuccess {String} updatedAt Date of last update.
  */
-router.patch('/:id', (req, res, next) => (
-  User.find({ where: { id: req.params.id } })
-    .then((user) => {
-      if (!user) {
-        const err = new Error('User not found');
-        err.status = 404;
-        throw err;
-      }
+router.patch('/:id', (req, res, next) => {
+  const { error } = Joi.validate(req.body, {
+    name: Joi.string().required(),
+  });
 
-      return user.update(req.body);
-    })
-    .then(user => res.json(user))
-    .catch(err => next(err))
-));
+  if (error) {
+    const err = new Error('Invalid request body');
+    err.status = 400;
+    next(err);
+  } else {
+    User.find({ where: { id: req.params.id } })
+      .then((user) => {
+        if (!user) {
+          const err = new Error('User not found');
+          err.status = 404;
+          throw err;
+        }
+
+        return user.update(req.body);
+      })
+      .then(user => res.json(user))
+      .catch(err => next(err));
+  }
+});
 
 /**
  * @api {delete} /users/:id Delete an user
