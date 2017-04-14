@@ -13,8 +13,17 @@ const router = express.Router();
  * @apiSuccess {String} createdAt Date of creation.
  * @apiSuccess {String} updatedAt Date of last update.
  */
-router.get('/:id', (req, res) => (
-  User.find({ where: { id: req.params.id } }).then(user => res.json(user))
+router.get('/:id', (req, res, next) => (
+  User.find({ where: { id: req.params.id } })
+    .then((user) => {
+      if (user) {
+        res.json(user);
+      } else {
+        const err = new Error('User not found');
+        err.status = 404;
+        next(err);
+      }
+    })
 ));
 
 /**
@@ -45,10 +54,19 @@ router.post('/', (req, res) => (
  * @apiSuccess {String} createdAt Date of creation.
  * @apiSuccess {String} updatedAt Date of last update.
  */
-router.patch('/:id', (req, res) => (
+router.patch('/:id', (req, res, next) => (
   User.find({ where: { id: req.params.id } })
-    .then(user => user.update(req.body))
+    .then((user) => {
+      if (!user) {
+        const err = new Error('User not found');
+        err.status = 404;
+        throw err;
+      }
+
+      return user.update(req.body);
+    })
     .then(user => res.json(user))
+    .catch(err => next(err))
 ));
 
 /**
@@ -56,10 +74,19 @@ router.patch('/:id', (req, res) => (
  * @apiName DeleteUser
  * @apiGroup User
  */
-router.delete('/:id', (req, res) => (
+router.delete('/:id', (req, res, next) => (
   User.find({ where: { id: req.params.id } })
-    .then(user => user.destroy())
+    .then((user) => {
+      if (!user) {
+        const err = new Error('User not found');
+        err.status = 404;
+        throw err;
+      }
+
+      return user.destroy();
+    })
     .then(() => res.sendStatus(204))
+    .catch(err => next(err))
 ));
 
 /**
@@ -73,15 +100,24 @@ router.delete('/:id', (req, res) => (
  * @apiSuccess {String} body.createdAt Date of creation.
  * @apiSuccess {String} body.updatedAt Date of last update.
  */
-router.get('/:id/groups', (req, res) => (
+router.get('/:id/groups', (req, res, next) => (
   User.find({ where: { id: req.params.id } })
-    .then(user => user.getGroups())
+    .then((user) => {
+      if (!user) {
+        const err = new Error('User not found');
+        err.status = 404;
+        throw err;
+      }
+
+      return user.getGroups();
+    })
     .then(groups => res.json(groups.map(group => ({
       id: group.id,
       name: group.name,
       createdAt: group.createdAt,
       updatedAt: group.updatedAt,
     }))))
+    .catch(err => next(err))
 ));
 
 /**
@@ -98,13 +134,19 @@ router.get('/:id/groups', (req, res) => (
  * @apiSuccess {String} body.createdAt Date of creation.
  * @apiSuccess {String} body.updatedAt Date of last update.
  */
-router.get('/:id/exercises', (req, res) => {
+router.get('/:id/exercises', (req, res, next) => {
   let user;
   let exercises;
   let sets;
 
   User.find({ where: { id: req.params.id } })
     .then((foundUser) => {
+      if (!foundUser) {
+        const err = new Error('User not found');
+        err.status = 404;
+        throw err;
+      }
+
       user = foundUser;
       return user.getExercises();
     })
@@ -125,7 +167,8 @@ router.get('/:id/exercises', (req, res) => {
       sets: sets[index],
       exerciseType: exerciseTypes[index],
     }))))
-    .then(result => res.json(result));
+    .then(result => res.json(result))
+    .catch(err => next(err));
 });
 
 module.exports = router;
