@@ -1,4 +1,5 @@
 const express = require('express');
+const Joi = require('joi');
 const Group = require('../models').Group;
 const User = require('../models').User;
 
@@ -54,9 +55,19 @@ router.get('/:id', (req, res, next) => (
  * @apiSuccess {String} createdAt Date of creation.
  * @apiSuccess {String} updatedAt Date of last update.
  */
-router.post('/', (req, res) => (
-  Group.create({ name: req.body.name }).then(group => res.json(group))
-));
+router.post('/', (req, res, next) => {
+  const { error } = Joi.validate(req.body, {
+    name: Joi.string().required(),
+  });
+
+  if (error) {
+    const err = new Error('Invalid request body');
+    err.status = 400;
+    next(err);
+  } else {
+    Group.create({ name: req.body.name }).then(group => res.json(group));
+  }
+});
 
 /**
  * @api {patch} /groups/:id Edit a group
@@ -70,20 +81,30 @@ router.post('/', (req, res) => (
  * @apiSuccess {String} createdAt Date of creation.
  * @apiSuccess {String} updatedAt Date of last update.
  */
-router.patch('/:id', (req, res, next) => (
-  Group.find({ where: { id: req.params.id } })
-    .then((group) => {
-      if (!group) {
-        const err = new Error('Group not found');
-        err.status = 404;
-        next(err);
-      }
+router.patch('/:id', (req, res, next) => {
+  const { error } = Joi.validate(req.body, {
+    name: Joi.string().required(),
+  });
 
-      return group.update(req.body);
-    })
-    .then(group => res.json(group))
-    .catch(err => next(err))
-));
+  if (error) {
+    const err = new Error('Invalid request body');
+    err.status = 400;
+    next(err);
+  } else {
+    Group.find({ where: { id: req.params.id } })
+      .then((group) => {
+        if (!group) {
+          const err = new Error('Group not found');
+          err.status = 404;
+          next(err);
+        }
+
+        return group.update(req.body);
+      })
+      .then(group => res.json(group))
+      .catch(err => next(err));
+  }
+});
 
 /**
  * @api {delete} /groups/:id Delete a group
@@ -141,22 +162,32 @@ router.get('/:id/members', (req, res, next) => (
  * @apiName PostGroupMember
  * @apiGroup Group
  *
- * @apiParam {Number} id ID of the user.
+ * @apiParam {Number} userId ID of the user.
  */
-router.post('/:id/members', (req, res, next) => (
-  Group.find({ where: { id: req.params.id } })
-    .then((group) => {
-      if (!group) {
-        const err = new Error('Group not found');
-        err.status = 404;
-        next(err);
-      }
+router.post('/:id/members', (req, res, next) => {
+  const { error } = Joi.validate(req.body, {
+    userId: Joi.number().required(),
+  });
 
-      return group.addUser(req.body.userId);
-    })
-    .then(() => res.sendStatus(204))
-    .catch(err => next(err))
-));
+  if (error) {
+    const err = new Error('Invalid request body');
+    err.status = 400;
+    next(err);
+  } else {
+    Group.find({ where: { id: req.params.id } })
+      .then((group) => {
+        if (!group) {
+          const err = new Error('Group not found');
+          err.status = 404;
+          next(err);
+        }
+
+        return group.addUser(req.body.userId);
+      })
+      .then(() => res.sendStatus(204))
+      .catch(err => next(err));
+  }
+});
 
 /**
  * @api {delete} /groups/:group-id/members/:user-id Remove a member from a group
