@@ -89,10 +89,19 @@ router.patch('/:id', (req, res, next) => (
  * @apiName DeleteExerciseType
  * @apiGroup ExerciseType
  */
-router.delete('/:id', (req, res) => (
+router.delete('/:id', (req, res, next) => (
   ExerciseType.find({ where: { id: req.params.id } })
-    .then(exerciseType => exerciseType.destroy())
+    .then((exerciseType) => {
+      if (exerciseType) {
+        return exerciseType.destroy();
+      }
+
+      const err = new Error('Not Found');
+      err.status = 404;
+      throw err;
+    })
     .then(() => res.sendStatus(204))
+    .catch(err => next(err))
 ));
 
 module.exports = router;
