@@ -1,4 +1,5 @@
 const express = require('express');
+const Joi = require('joi');
 const Exercise = require('../models').Exercise;
 const ExerciseType = require('../models').ExerciseType;
 const User = require('../models').User;
@@ -123,46 +124,59 @@ router.get('/:id', (req, res, next) => {
  * @apiSuccess {String} createdAt Date of creation.
  * @apiSuccess {String} updatedAt Date of last update.
  */
-router.post('/', (req, res) => {
-  let exercise;
-  let typeOfExercise;
-  let setsOfExercise;
+router.post('/', (req, res, next) => {
+  const { error } = Joi.validate(req.body, {
+    exerciseTypeName: Joi.string().required(),
+    note: Joi.string().optional(),
+    userId: Joi.number().required(),
+    sets: Joi.array().required(),
+  });
 
-  ExerciseType.find({ where: { name: req.body.exerciseTypeName } })
-    .then((exerciseType) => {
-      if (exerciseType) {
-        return exerciseType;
-      }
-      // exercise type does not exist --> create a new one
-      return ExerciseType.create({ name: req.body.exerciseTypeName });
-    })
-    .then((exerciseType) => {
-      typeOfExercise = exerciseType;
-      return Exercise.create({ note: req.body.note });
-    })
-    .then((newExercise) => {
-      exercise = newExercise;
-      return exercise.setExerciseType(typeOfExercise);
-    })
-    .then(() => exercise.setUser(req.body.userId))
-    .then(() => Promise.all(req.body.sets.map(set => Set.create(set))))
-    .then((sets) => {
-      setsOfExercise = sets;
-      return User.find({ where: { id: req.body.userId } });
-    })
-    .then((user) => {
-      const result = {
-        user,
-        id: exercise.id,
-        note: exercise.note,
-        createdAt: exercise.createdAt,
-        updatedAt: exercise.updatedAt,
-        sets: setsOfExercise,
-        exerciseType: typeOfExercise,
-      };
+  if (error) {
+    const err = new Error('Invalid request body');
+    err.status = 400;
+    next(err);
+  } else {
+    let exercise;
+    let typeOfExercise;
+    let setsOfExercise;
 
-      res.json(result);
-    });
+    ExerciseType.find({ where: { name: req.body.exerciseTypeName } })
+      .then((exerciseType) => {
+        if (exerciseType) {
+          return exerciseType;
+        }
+        // exercise type does not exist --> create a new one
+        return ExerciseType.create({ name: req.body.exerciseTypeName });
+      })
+      .then((exerciseType) => {
+        typeOfExercise = exerciseType;
+        return Exercise.create({ note: req.body.note });
+      })
+      .then((newExercise) => {
+        exercise = newExercise;
+        return exercise.setExerciseType(typeOfExercise);
+      })
+      .then(() => exercise.setUser(req.body.userId))
+      .then(() => Promise.all(req.body.sets.map(set => Set.create(set))))
+      .then((sets) => {
+        setsOfExercise = sets;
+        return User.find({ where: { id: req.body.userId } });
+      })
+      .then((user) => {
+        const result = {
+          user,
+          id: exercise.id,
+          note: exercise.note,
+          createdAt: exercise.createdAt,
+          updatedAt: exercise.updatedAt,
+          sets: setsOfExercise,
+          exerciseType: typeOfExercise,
+        };
+
+        res.json(result);
+      });
+  }
 });
 
 /**
@@ -179,20 +193,32 @@ router.post('/', (req, res) => {
  * @apiSuccess {String} createdAt Date of creation.
  * @apiSuccess {String} updatedAt Date of last update.
  */
-router.patch('/:id', (req, res, next) => (
-  Exercise.find({ where: { id: req.params.id } })
-    .then((exercise) => {
-      if (!exercise) {
-        const err = new Error('Exercise not found');
-        err.status = 404;
-        throw err;
-      }
+router.patch('/:id', (req, res, next) => {
+  const { error } = Joi.validate(req.body, {
+    exerciseTypeName: Joi.string().optional(),
+    note: Joi.string().optional(),
+    sets: Joi.array().optional(),
+  });
 
-      return exercise.update(req.body);
-    })
-    .then(() => res.sendStatus(204))
-    .catch(err => next(err))
-));
+  if (error) {
+    const err = new Error('Invalid request body');
+    err.status = 400;
+    next(err);
+  } else {
+    Exercise.find({ where: { id: req.params.id } })
+      .then((exercise) => {
+        if (!exercise) {
+          const err = new Error('Exercise not found');
+          err.status = 404;
+          throw err;
+        }
+
+        return exercise.update(req.body);
+      })
+      .then(() => res.sendStatus(204))
+      .catch(err => next(err));
+  }
+});
 
 /**
  * @api {delete} /exercises/:id Delete an exercise
@@ -251,22 +277,33 @@ router.get('/:id/sets', (req, res, next) => (
  * @apiParam {Number} weight Weight.
  */
 router.post('/:id/sets', (req, res, next) => {
-  let exercise;
+  const { error } = Joi.validate(req.body, {
+    numReps: Joi.number().required(),
+    weight: Joi.number().required(),
+  });
 
-  Exercise.find({ where: { id: req.params.id } })
-    .then((exer) => {
-      if (!exer) {
-        const err = new Error('Exercise not found');
-        err.status = 404;
-        throw err;
-      }
+  if (error) {
+    const err = new Error('Invalid request body');
+    err.status = 400;
+    next(err);
+  } else {
+    let exercise;
 
-      exercise = exer;
-      return Set.create(req.body.set);
-    })
-    .then(set => set.setExercise(exercise))
-    .then(() => res.sendStatus(204))
-    .catch(err => next(err));
+    Exercise.find({ where: { id: req.params.id } })
+      .then((exer) => {
+        if (!exer) {
+          const err = new Error('Exercise not found');
+          err.status = 404;
+          throw err;
+        }
+
+        exercise = exer;
+        return Set.create(req.body.set);
+      })
+      .then(set => set.setExercise(exercise))
+      .then(() => res.sendStatus(204))
+      .catch(err => next(err));
+  }
 });
 
 /**
@@ -297,20 +334,31 @@ router.delete('/:exerciseId/sets/:setId', (req, res, next) => (
  * @apiParam {Number} [numRep] Optional number of reps.
  * @apiParam {Number} [weight] Weight.
  */
-router.patch('/:exerciseId/sets/:setId', (req, res, next) => (
-  Set.find({ where: { id: req.params.setId } })
-    .then((set) => {
-      if (!set) {
-        const err = new Error('Set not found');
-        err.status = 404;
-        throw err;
-      }
+router.patch('/:exerciseId/sets/:setId', (req, res, next) => {
+  const { error } = Joi.validate(req.body, {
+    numReps: Joi.number().optional(),
+    weight: Joi.number().optional(),
+  });
 
-      return set.update(req.body);
-    })
-    .then(() => res.sendStatus(204))
-    .catch(err => next(err))
-));
+  if (error) {
+    const err = new Error('Invalid request body');
+    err.status = 400;
+    next(err);
+  } else {
+    Set.find({ where: { id: req.params.setId } })
+      .then((set) => {
+        if (!set) {
+          const err = new Error('Set not found');
+          err.status = 404;
+          throw err;
+        }
+
+        return set.update(req.body);
+      })
+      .then(() => res.sendStatus(204))
+      .catch(err => next(err));
+  }
+});
 
 /**
  * @api {get} /exercises/:id/comments List comments of exercise
@@ -363,36 +411,47 @@ router.get('/:id/comments', (req, res, next) => {
  * @apiParam {Number} userId ID of the user posting the comment.
  */
 router.post('/:id/comments', (req, res, next) => {
-  let exercise;
-  let comment;
+  const { error } = Joi.validate(req.body, {
+    text: Joi.string().required(),
+    userId: Joi.number().required(),
+  });
 
-  Exercise.find({ where: { id: req.params.id } })
-    .then((exer) => {
-      if (!exer) {
-        const err = new Error('Exercise not found');
-        err.status = 404;
-        throw err;
-      }
+  if (error) {
+    const err = new Error('Invalid request body');
+    err.status = 400;
+    next(err);
+  } else {
+    let exercise;
+    let comment;
 
-      exercise = exer;
-      return User.find({ where: { id: req.body.userId } });
-    })
-    .then((user) => {
-      if (!user) {
-        const err = new Error('User not found');
-        err.status = 404;
-        throw err;
-      }
+    Exercise.find({ where: { id: req.params.id } })
+      .then((exer) => {
+        if (!exer) {
+          const err = new Error('Exercise not found');
+          err.status = 404;
+          throw err;
+        }
 
-      return Comment.create({ text: req.body.text });
-    })
-    .then((newComment) => {
-      comment = newComment;
-      return comment.setExercise(exercise);
-    })
-    .then(() => comment.setUser(req.body.userId))
-    .then(() => res.sendStatus(204))
-    .catch(err => next(err));
+        exercise = exer;
+        return User.find({ where: { id: req.body.userId } });
+      })
+      .then((user) => {
+        if (!user) {
+          const err = new Error('User not found');
+          err.status = 404;
+          throw err;
+        }
+
+        return Comment.create({ text: req.body.text });
+      })
+      .then((newComment) => {
+        comment = newComment;
+        return comment.setExercise(exercise);
+      })
+      .then(() => comment.setUser(req.body.userId))
+      .then(() => res.sendStatus(204))
+      .catch(err => next(err));
+  }
 });
 
 /**
@@ -402,8 +461,17 @@ router.post('/:id/comments', (req, res, next) => {
  *
  * @apiParam {String} text Text of the comment.
  */
-router.patch('/:exerciseId/comments/:commentId', (req, res, next) => (
-  Comment.find({ where: { id: req.params.commentId } })
+router.patch('/:exerciseId/comments/:commentId', (req, res, next) => {
+  const { error } = Joi.validate(req.body, {
+    text: Joi.string().required(),
+  });
+
+  if (error) {
+    const err = new Error('Invalid request body');
+    err.status = 400;
+    next(err);
+  } else {
+    Comment.find({ where: { id: req.params.commentId } })
     .then((comment) => {
       if (!comment) {
         const err = new Error('Comment not found');
@@ -414,8 +482,9 @@ router.patch('/:exerciseId/comments/:commentId', (req, res, next) => (
       return comment.update({ text: req.body.text });
     })
     .then(() => res.sendStatus(204))
-    .catch(err => next(err))
-));
+    .catch(err => next(err));
+  }
+});
 
 /**
  * @api {delete} /exercises/:exercise-id/comments/:comment-id Delete a comment of an exercise
