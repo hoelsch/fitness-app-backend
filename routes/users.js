@@ -86,7 +86,7 @@ router.patch('/:id', (req, res, next) => {
         return user.update(req.body);
       })
       .then(user => res.json(user))
-      .catch(err => next(err));
+      .catch(next);
   }
 });
 
@@ -107,7 +107,7 @@ router.delete('/:id', (req, res, next) => (
       return user.destroy();
     })
     .then(() => res.sendStatus(204))
-    .catch(err => next(err))
+    .catch(next)
 ));
 
 /**
@@ -138,7 +138,7 @@ router.get('/:id/groups', (req, res, next) => (
       createdAt: group.createdAt,
       updatedAt: group.updatedAt,
     }))))
-    .catch(err => next(err))
+    .catch(next)
 ));
 
 /**
@@ -189,7 +189,7 @@ router.get('/:id/exercises', (req, res, next) => {
       exerciseType: exerciseTypes[index],
     }))))
     .then(result => res.json(result))
-    .catch(err => next(err));
+    .catch(next);
 });
 
 module.exports = router;

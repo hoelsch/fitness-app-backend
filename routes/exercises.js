@@ -103,7 +103,7 @@ router.get('/:id', (req, res, next) => {
 
       res.json(result);
     })
-    .catch(err => next(err));
+    .catch(next);
 });
 
 /**
@@ -216,7 +216,7 @@ router.patch('/:id', (req, res, next) => {
         return exercise.update(req.body);
       })
       .then(() => res.sendStatus(204))
-      .catch(err => next(err));
+      .catch(next);
   }
 });
 
@@ -237,7 +237,7 @@ router.delete('/:id', (req, res, next) => (
       return exercise.destroy();
     })
     .then(() => res.sendStatus(204))
-    .catch(err => next(err))
+    .catch(next)
 ));
 
 /**
@@ -265,7 +265,7 @@ router.get('/:id/sets', (req, res, next) => (
       return exercise.getSets();
     })
     .then(sets => res.json(sets))
-    .catch(err => next(err))
+    .catch(next)
 ));
 
 /**
@@ -302,7 +302,7 @@ router.post('/:id/sets', (req, res, next) => {
       })
       .then(set => set.setExercise(exercise))
       .then(() => res.sendStatus(204))
-      .catch(err => next(err));
+      .catch(next);
   }
 });
 
@@ -323,7 +323,7 @@ router.delete('/:exerciseId/sets/:setId', (req, res, next) => (
       return set.destroy();
     })
     .then(() => res.sendStatus(204))
-    .catch(err => next(err))
+    .catch(next)
 ));
 
 /**
@@ -356,7 +356,7 @@ router.patch('/:exerciseId/sets/:setId', (req, res, next) => {
         return set.update(req.body);
       })
       .then(() => res.sendStatus(204))
-      .catch(err => next(err));
+      .catch(next);
   }
 });
 
@@ -399,7 +399,7 @@ router.get('/:id/comments', (req, res, next) => {
       })))
     ))
     .then(result => res.json(result))
-    .catch(err => next(err));
+    .catch(next);
 });
 
 /**
@@ -450,7 +450,7 @@ router.post('/:id/comments', (req, res, next) => {
       })
       .then(() => comment.setUser(req.body.userId))
       .then(() => res.sendStatus(204))
-      .catch(err => next(err));
+      .catch(next);
   }
 });
 
@@ -482,7 +482,7 @@ router.patch('/:exerciseId/comments/:commentId', (req, res, next) => {
       return comment.update({ text: req.body.text });
     })
     .then(() => res.sendStatus(204))
-    .catch(err => next(err));
+    .catch(next);
   }
 });
 
@@ -503,7 +503,7 @@ router.delete('/:exerciseId/comments/:commentId', (req, res, next) => (
       return comment.destroy();
     })
     .then(() => res.sendStatus(204))
-    .catch(err => next(err))
+    .catch(next)
 ));
 
 module.exports = router;

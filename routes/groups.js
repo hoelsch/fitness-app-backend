@@ -102,7 +102,7 @@ router.patch('/:id', (req, res, next) => {
         return group.update(req.body);
       })
       .then(group => res.json(group))
-      .catch(err => next(err));
+      .catch(next);
   }
 });
 
@@ -123,7 +123,7 @@ router.delete('/:id', (req, res, next) => (
       return group.destroy();
     })
     .then(() => res.sendStatus(204))
-    .catch(err => next(err))
+    .catch(next)
 ));
 
 /**
@@ -154,7 +154,7 @@ router.get('/:id/members', (req, res, next) => (
       createdAt: member.createdAt,
       updatedAt: member.updatedAt,
     }))))
-    .catch(err => next(err))
+    .catch(next)
 ));
 
 /**
@@ -185,7 +185,7 @@ router.post('/:id/members', (req, res, next) => {
         return group.addUser(req.body.userId);
       })
       .then(() => res.sendStatus(204))
-      .catch(err => next(err));
+      .catch(next);
   }
 });
 
@@ -218,7 +218,7 @@ router.delete('/:groupId/members/:userId', (req, res, next) => {
       return group.removeUser(req.params.userId);
     })
     .then(() => res.sendStatus(204))
-    .catch(err => next(err));
+    .catch(next);
 });
 
 /**
@@ -287,7 +287,7 @@ router.get('/:id/exercises', (req, res, next) => {
       })));
     })
     .then(result => res.json(result))
-    .catch(err => next(err));
+    .catch(next);
 });
 
 module.exports = router;

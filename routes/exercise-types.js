@@ -102,7 +102,7 @@ router.patch('/:id', (req, res, next) => {
         return exerciseType.update(req.body);
       })
       .then(updatedExerciseType => res.json(updatedExerciseType))
-      .catch(err => next(err));
+      .catch(next);
   }
 });
 
@@ -123,7 +123,7 @@ router.delete('/:id', (req, res, next) => (
       return exerciseType.destroy();
     })
     .then(() => res.sendStatus(204))
-    .catch(err => next(err))
+    .catch(next)
 ));
 
 module.exports = router;
