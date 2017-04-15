@@ -3,6 +3,7 @@
 const app = require('../app');
 const debug = require('debug')('express-sequelize');
 const http = require('http');
+const winston = require('winston');
 const models = require('../models');
 
 /**
@@ -24,7 +25,7 @@ function normalizePort(val) {
   return false;
 }
 
-// Get port from environment and store in Express.
+// Get port from environment and store in Express
 const port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
@@ -46,11 +47,11 @@ function onError(error) {
   // handle specific listen errors with friendly messages
   switch (error.code) {
     case 'EACCES':
-      console.error(`${bind} requires elevated privileges`);
+      winston.error(`${bind} requires elevated privileges`);
       process.exit(1);
       break;
     case 'EADDRINUSE':
-      console.error(`${bind} is already in use`);
+      winston.error(`${bind} is already in use`);
       process.exit(1);
       break;
     default:
@@ -69,7 +70,7 @@ function onListening() {
   debug(`Listening on ${bind}`);
 }
 
-// Listen on provided port, on all network interfaces.
+// Listen on provided port, on all network interfaces
 if (process.env.NODE_ENV !== 'test') {
   models.sequelize.sync().then(() => {
     server.listen(port);
