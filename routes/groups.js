@@ -1,5 +1,6 @@
 const express = require('express');
 const Joi = require('joi');
+const CustomError = require('../helpers/custom-error');
 const Group = require('../models').Group;
 const User = require('../models').User;
 
@@ -36,9 +37,7 @@ router.get('/:id', (req, res, next) => (
       if (group) {
         res.json(group);
       } else {
-        const err = new Error('Group not found');
-        err.status = 404;
-        next(err);
+        next(new CustomError('Group not found', 404));
       }
     })
 ));
@@ -61,9 +60,7 @@ router.post('/', (req, res, next) => {
   });
 
   if (error) {
-    const err = new Error('Invalid request body');
-    err.status = 400;
-    next(err);
+    next(new CustomError('Invalid request body', 400));
   } else {
     Group.create({ name: req.body.name }).then(group => res.json(group));
   }
@@ -87,16 +84,12 @@ router.patch('/:id', (req, res, next) => {
   });
 
   if (error) {
-    const err = new Error('Invalid request body');
-    err.status = 400;
-    next(err);
+    next(new CustomError('Invalid request body', 400));
   } else {
     Group.find({ where: { id: req.params.id } })
       .then((group) => {
         if (!group) {
-          const err = new Error('Group not found');
-          err.status = 404;
-          next(err);
+          next(new CustomError('Group not found', 404));
         }
 
         return group.update(req.body);
@@ -115,9 +108,7 @@ router.delete('/:id', (req, res, next) => (
   Group.find({ where: { id: req.params.id } })
     .then((group) => {
       if (!group) {
-        const err = new Error('Group not found');
-        err.status = 404;
-        next(err);
+        next(new CustomError('Group not found', 404));
       }
 
       return group.destroy();
@@ -141,9 +132,7 @@ router.get('/:id/members', (req, res, next) => (
   Group.find({ where: { id: req.params.id } })
     .then((group) => {
       if (!group) {
-        const err = new Error('Group not found');
-        err.status = 404;
-        next(err);
+        next(new CustomError('Group not found', 404));
       }
 
       return group.getUsers();
@@ -170,16 +159,12 @@ router.post('/:id/members', (req, res, next) => {
   });
 
   if (error) {
-    const err = new Error('Invalid request body');
-    err.status = 400;
-    next(err);
+    next(new CustomError('Invalid request body', 400));
   } else {
     Group.find({ where: { id: req.params.id } })
       .then((group) => {
         if (!group) {
-          const err = new Error('Group not found');
-          err.status = 404;
-          next(err);
+          next(new CustomError('Group not found', 404));
         }
 
         return group.addUser(req.body.userId);
@@ -200,9 +185,7 @@ router.delete('/:groupId/members/:userId', (req, res, next) => {
   Group.find({ where: { id: req.params.groupId } })
     .then((foundGroup) => {
       if (!foundGroup) {
-        const err = new Error('Group not found');
-        err.status = 404;
-        next(err);
+        next(new CustomError('Group not found', 404));
       }
 
       group = foundGroup;
@@ -210,9 +193,7 @@ router.delete('/:groupId/members/:userId', (req, res, next) => {
     })
     .then((user) => {
       if (!user) {
-        const err = new Error('User not found');
-        err.status = 404;
-        next(err);
+        next(new CustomError('User not found', 404));
       }
 
       return group.removeUser(req.params.userId);
@@ -244,9 +225,7 @@ router.get('/:id/exercises', (req, res, next) => {
   Group.find({ where: { id: req.params.id } })
     .then((group) => {
       if (!group) {
-        const err = new Error('Group not found');
-        err.status = 404;
-        next(err);
+        next(new CustomError('Group not found', 404));
       }
 
       return group.getUsers();

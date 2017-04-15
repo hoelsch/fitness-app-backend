@@ -1,5 +1,6 @@
 const express = require('express');
 const Joi = require('joi');
+const CustomError = require('../helpers/custom-error');
 const User = require('../models').User;
 
 const router = express.Router();
@@ -20,9 +21,7 @@ router.get('/:id', (req, res, next) => (
       if (user) {
         res.json(user);
       } else {
-        const err = new Error('User not found');
-        err.status = 404;
-        next(err);
+        next(new CustomError('User not found', 404));
       }
     })
 ));
@@ -45,9 +44,7 @@ router.post('/', (req, res, next) => {
   });
 
   if (error) {
-    const err = new Error('Invalid request body');
-    err.status = 400;
-    next(err);
+    next(new CustomError('Invalid request body', 400));
   } else {
     User.create({ name: req.body.name }).then(user => res.json(user));
   }
@@ -71,16 +68,12 @@ router.patch('/:id', (req, res, next) => {
   });
 
   if (error) {
-    const err = new Error('Invalid request body');
-    err.status = 400;
-    next(err);
+    next(new CustomError('Invalid request body', 400));
   } else {
     User.find({ where: { id: req.params.id } })
       .then((user) => {
         if (!user) {
-          const err = new Error('User not found');
-          err.status = 404;
-          throw err;
+          next(new CustomError('User not found', 404));
         }
 
         return user.update(req.body);
@@ -99,9 +92,7 @@ router.delete('/:id', (req, res, next) => (
   User.find({ where: { id: req.params.id } })
     .then((user) => {
       if (!user) {
-        const err = new Error('User not found');
-        err.status = 404;
-        throw err;
+        next(new CustomError('User not found', 404));
       }
 
       return user.destroy();
@@ -125,9 +116,7 @@ router.get('/:id/groups', (req, res, next) => (
   User.find({ where: { id: req.params.id } })
     .then((user) => {
       if (!user) {
-        const err = new Error('User not found');
-        err.status = 404;
-        throw err;
+        next(new CustomError('User not found', 404));
       }
 
       return user.getGroups();
@@ -163,9 +152,7 @@ router.get('/:id/exercises', (req, res, next) => {
   User.find({ where: { id: req.params.id } })
     .then((foundUser) => {
       if (!foundUser) {
-        const err = new Error('User not found');
-        err.status = 404;
-        throw err;
+        next(new CustomError('User not found', 404));
       }
 
       user = foundUser;

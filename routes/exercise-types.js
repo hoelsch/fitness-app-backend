@@ -1,6 +1,7 @@
 const express = require('express');
 const ExerciseType = require('../models').ExerciseType;
 const Joi = require('joi');
+const CustomError = require('../helpers/custom-error');
 
 const router = express.Router();
 
@@ -35,9 +36,7 @@ router.get('/:id', (req, res, next) => (
       if (exerciseType) {
         res.json(exerciseType);
       } else {
-        const err = new Error('Exercise type not found');
-        err.status = 404;
-        next(err);
+        next(new CustomError('Exercise type not found', 404));
       }
     })
 ));
@@ -60,9 +59,7 @@ router.post('/', (req, res, next) => {
   });
 
   if (error) {
-    const err = new Error('Invalid request body');
-    err.status = 400;
-    next(err);
+    next(new CustomError('Invalid request body', 400));
   } else {
     ExerciseType.create({ name: req.body.name })
       .then(exerciseType => res.json(exerciseType));
@@ -87,16 +84,12 @@ router.patch('/:id', (req, res, next) => {
   });
 
   if (error) {
-    const err = new Error('Invalid request body');
-    err.status = 400;
-    next(err);
+    next(new CustomError('Invalid request body', 400));
   } else {
     ExerciseType.find({ where: { id: req.params.id } })
       .then((exerciseType) => {
         if (!exerciseType) {
-          const err = new Error('Exercise type not found');
-          err.status = 404;
-          throw err;
+          next(new CustomError('Exercise type not found', 404));
         }
 
         return exerciseType.update(req.body);
@@ -115,9 +108,7 @@ router.delete('/:id', (req, res, next) => (
   ExerciseType.find({ where: { id: req.params.id } })
     .then((exerciseType) => {
       if (!exerciseType) {
-        const err = new Error('Exercise type not found');
-        err.status = 404;
-        throw err;
+        next(new CustomError('Exercise type not found', 404));
       }
 
       return exerciseType.destroy();
