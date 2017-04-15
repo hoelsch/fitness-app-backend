@@ -17,7 +17,7 @@ const router = express.Router();
  * @apiSuccess {String} body.updatedAt Date of last update.
  */
 router.get('/', (req, res) => (
-  ExerciseType.findAll().then(exerciseType => res.json(exerciseType))
+  ExerciseType.findAll().then(exerciseTypes => res.json(exerciseTypes))
 ));
 
 /**
