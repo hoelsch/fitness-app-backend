@@ -31,17 +31,21 @@ router.get('/', (req, res) => {
   Exercise.findAll()
     .then((allExercises) => {
       exercises = allExercises;
+      // get user of each exercise
       return Promise.all(exercises.map(exercise => exercise.getUser()));
     })
     .then((users) => {
       userOfExercises = users;
+      // get type of each exercise
       return Promise.all(exercises.map(exercise => exercise.getExerciseType()));
     })
     .then((exerciseTypes) => {
       typesOfExercises = exerciseTypes;
+      // get sets of each exercise
       return Promise.all(exercises.map(exercise => exercise.getSets()));
     })
     .then((setsOfExercises) => {
+      // create result object that will be sent to client
       const result = exercises.map((exercise, index) => ({
         id: exercise.id,
         note: exercise.note,
@@ -138,6 +142,7 @@ router.post('/', (req, res, next) => {
     let typeOfExercise;
     let setsOfExercise;
 
+    // first, search for type of the exercise
     ExerciseType.find({ where: { name: req.body.exerciseTypeName } })
       .then((exerciseType) => {
         if (exerciseType) {
@@ -152,12 +157,14 @@ router.post('/', (req, res, next) => {
       })
       .then((newExercise) => {
         exercise = newExercise;
+        // create relationship between exercise and its type
         return exercise.setExerciseType(typeOfExercise);
       })
       .then(() => exercise.setUser(req.body.userId))
       .then(() => Promise.all(req.body.sets.map(set => Set.create(set))))
       .then((sets) => {
         setsOfExercise = sets;
+        // get the user object which should also be contained in response
         return User.find({ where: { id: req.body.userId } });
       })
       .then((user) => {
@@ -364,6 +371,7 @@ router.get('/:id/comments', (req, res, next) => {
     })
     .then((comments) => {
       commentsOfExercise = comments;
+      // get user of each comment
       return Promise.all(comments.map(comment => comment.getUser()));
     })
     .then(users => (

@@ -160,10 +160,12 @@ router.get('/:id/exercises', (req, res, next) => {
     })
     .then((exercisesOfUser) => {
       exercises = exercisesOfUser;
+      // get sets of each exercise
       return Promise.all(exercises.map(exercise => exercise.getSets()));
     })
     .then((setsOfExercises) => {
       sets = setsOfExercises;
+      // get types of each exercise
       return Promise.all(exercises.map(exercise => exercise.getExerciseType()));
     })
     .then(exerciseTypes => Promise.all(exercises.map((exercise, index) => ({

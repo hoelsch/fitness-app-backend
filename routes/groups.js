@@ -236,6 +236,7 @@ router.get('/:id/exercises', (req, res, next) => {
         res.json([]);
       }
 
+      // get exercises of each user of the group
       return Promise.all(users.map(user => user.getExercises()));
     })
     .then((exercisesOfUsers) => {
@@ -247,14 +248,17 @@ router.get('/:id/exercises', (req, res, next) => {
         });
       });
 
+      // get sets of all exercises of each user of the group
       return Promise.all(exercises.map(exercise => exercise.getSets()));
     })
     .then((setsOfExercises) => {
       sets = setsOfExercises;
+      // types of the exercises of each user of the group
       return Promise.all(exercises.map(exercise => exercise.getExerciseType()));
     })
     .then((typesOfExercises) => {
       exerciseTypes = typesOfExercises;
+      // create result object that will be sent to the client
       return Promise.all(exercises.map((exercise, index) => ({
         id: exercise.id,
         note: exercise.note,
