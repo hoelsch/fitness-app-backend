@@ -62,7 +62,7 @@ describe('Exercise', () => {
   });
 
   describe('GET /exercises', () => {
-    it('should get all exercises', function (done) {
+    it('should list exercises', function (done) {
       createExercise().then((result) => {
         chai.request(server)
           .get('/exercises')
@@ -97,7 +97,7 @@ describe('Exercise', () => {
   });
 
   describe('GET /exercises/:id', () => {
-    it('should get an exercise with a given id', function (done) {
+    it('should get a single exercise', function (done) {
       createExercise().then((result) => {
         chai.request(server)
           .get(`/exercises/${result.exercise.id}`)
@@ -129,7 +129,7 @@ describe('Exercise', () => {
           });
       });
     });
-    it('should return 404 for non-existing exercise', function (done) {
+    it('should return status code 404 for non-existing exercise', function (done) {
       chai.request(server)
         .get('/exercises/-1')
         .end((err, res) => {
@@ -141,7 +141,7 @@ describe('Exercise', () => {
   });
 
   describe('POST /exercises', () => {
-    it('should add an exercise', function (done) {
+    it('should create an exercise', function (done) {
       User.create(MockData.user).then((user) => {
         chai.request(server)
           .post('/exercises')
@@ -177,7 +177,7 @@ describe('Exercise', () => {
           });
       });
     });
-    it('should return 400 for invalid input data', function (done) {
+    it('should return status code 400 for invalid input data', function (done) {
       User.create(MockData.user).then(() => {
         chai.request(server)
           .post('/exercises')
@@ -192,7 +192,7 @@ describe('Exercise', () => {
   });
 
   describe('PATCH /exercises/:id', () => {
-    it('should update exercise with a given id', function (done) {
+    it('should edit an exercise', function (done) {
       createExercise().then((result) => {
         chai.request(server)
           .patch(`/exercises/${result.exercise.id}`)
@@ -204,7 +204,7 @@ describe('Exercise', () => {
           });
       });
     });
-    it('should return 404 for non-existing exercise', function (done) {
+    it('should return status code 404 for non-existing exercise', function (done) {
       chai.request(server)
         .patch('/exercises/-1')
         .send({ note: 'Updated' })
@@ -214,7 +214,7 @@ describe('Exercise', () => {
           done();
         });
     });
-    it('should return 400 for invalid input data', function (done) {
+    it('should return status code 400 for invalid input data', function (done) {
       createExercise().then((result) => {
         chai.request(server)
           .patch(`/exercises/${result.exercise.id}`)
@@ -229,7 +229,7 @@ describe('Exercise', () => {
   });
 
   describe('DELETE /exercises/:id', () => {
-    it('should delete exercise with a given id', function (done) {
+    it('should delete an exercise', function (done) {
       createExercise().then((result) => {
         chai.request(server)
           .delete(`/exercises/${result.exercise.id}`)
@@ -240,7 +240,7 @@ describe('Exercise', () => {
           });
       });
     });
-    it('should return 404 for non-existing exercise', function (done) {
+    it('should return status code 404 for non-existing exercise', function (done) {
       createExercise().then((result) => {
         chai.request(server)
           .delete('/exercises/-1')
@@ -254,7 +254,7 @@ describe('Exercise', () => {
   });
 
   describe('GET /exercises/:id/sets', () => {
-    it('should get sets of exercise with a given id', function (done) {
+    it('should list sets of an exercise', function (done) {
       createExercise().then((result) => {
         chai.request(server)
           .get(`/exercises/${result.exercise.id}/sets`)
@@ -273,7 +273,7 @@ describe('Exercise', () => {
           });
       });
     });
-    it('should return 404 for non-existing exercise', function (done) {
+    it('should return status code 404 for non-existing exercise', function (done) {
       createExercise().then((result) => {
         chai.request(server)
           .get('/exercises/-1/sets')
@@ -287,7 +287,7 @@ describe('Exercise', () => {
   });
 
   describe('POST /exercises/:id/sets', () => {
-    it('should add a set to an exercise with a given id', function (done) {
+    it('should create a set for an exercise', function (done) {
       createExercise().then((result) => {
         chai.request(server)
           .post(`/exercises/${result.exercise.id}/sets`)
@@ -299,7 +299,7 @@ describe('Exercise', () => {
           });
       });
     });
-    it('should return 404 for non-existing exercise', function (done) {
+    it('should return status code 404 for non-existing exercise', function (done) {
       chai.request(server)
         .post('/exercises/-1/sets')
         .send({ numReps: 1, weight: 1 })
@@ -309,7 +309,7 @@ describe('Exercise', () => {
           done();
         });
     });
-    it('should return 400 for invalid input data', function (done) {
+    it('should return status code 400 for invalid input data', function (done) {
       createExercise().then((result) => {
         chai.request(server)
           .post(`/exercises/${result.exercise.id}/sets`)
@@ -324,7 +324,7 @@ describe('Exercise', () => {
   });
 
   describe('DELETE /exercises/:exercise-id/sets/:set-id', () => {
-    it('should delete a set of an exercise with a given id', function (done) {
+    it('should delete a set of an exercise', function (done) {
       createExercise().then((result) => {
         chai.request(server)
           .delete(`/exercises/${result.exercise.id}/sets/${result.set.id}`)
@@ -335,7 +335,7 @@ describe('Exercise', () => {
           });
       });
     });
-    it('should return 404 for non-existing set', function (done) {
+    it('should return status code 404 for non-existing set', function (done) {
       chai.request(server)
         .delete('/exercises/-1/sets/-1')
         .end((err, res) => {
@@ -347,7 +347,7 @@ describe('Exercise', () => {
   });
 
   describe('PATCH /exercises/:exercise-id/sets/:set-id', () => {
-    it('should update a set of an exercise with a given id', function (done) {
+    it('should edit a set of an exercise', function (done) {
       createExercise().then((result) => {
         chai.request(server)
           .patch(`/exercises/${result.exercise.id}/sets/${result.set.id}`)
@@ -359,7 +359,7 @@ describe('Exercise', () => {
           });
       });
     });
-    it('should return 404 for non-existing set', function (done) {
+    it('should return status code 404 for non-existing set', function (done) {
       chai.request(server)
         .patch('/exercises/-1/sets/-1')
         .send({ numReps: 1, weight: 1 })
@@ -369,7 +369,7 @@ describe('Exercise', () => {
           done();
         });
     });
-    it('should return 400 for invalid input data', function (done) {
+    it('should return status code 400 for invalid input data', function (done) {
       createExercise().then((result) => {
         chai.request(server)
           .patch(`/exercises/${result.exercise.id}/sets/${result.set.id}`)
@@ -384,7 +384,7 @@ describe('Exercise', () => {
   });
 
   describe('GET /exercises/:id/comments', () => {
-    it('should get comments of an exercise with a given id', function (done) {
+    it('should list comments of an exercise', function (done) {
       createExercise().then((result) => {
         chai.request(server)
           .get(`/exercises/${result.exercise.id}/comments`)
@@ -412,7 +412,7 @@ describe('Exercise', () => {
           });
       });
     });
-    it('should return 404 for non-existing exercise', function (done) {
+    it('should return status code 404 for non-existing exercise', function (done) {
       chai.request(server)
         .get('/exercises/-1/comments')
         .end((err, res) => {
@@ -424,7 +424,7 @@ describe('Exercise', () => {
   });
 
   describe('POST /exercises/:id/comments', () => {
-    it('should add a comment to an exercise with a given id', function (done) {
+    it('should create a comment for an exercise', function (done) {
       createExercise().then((result) => {
         chai.request(server)
           .post(`/exercises/${result.exercise.id}/comments`)
@@ -436,7 +436,7 @@ describe('Exercise', () => {
           });
       });
     });
-    it('should return 404 for non-existing exercise', function (done) {
+    it('should return status code 404 for non-existing exercise', function (done) {
       createExercise().then((result) => {
         chai.request(server)
           .post('/exercises/-1/comments')
@@ -448,7 +448,7 @@ describe('Exercise', () => {
           });
       });
     });
-    it('should return 404 for non-existing user', function (done) {
+    it('should return status code 404 for non-existing user', function (done) {
       createExercise().then((result) => {
         chai.request(server)
           .post(`/exercises/${result.exercise.id}/comments`)
@@ -460,7 +460,7 @@ describe('Exercise', () => {
           });
       });
     });
-    it('should return 400 for invalid input data', function (done) {
+    it('should return status code 400 for invalid input data', function (done) {
       createExercise().then((result) => {
         chai.request(server)
           .post(`/exercises/${result.exercise.id}/comments`)
@@ -475,7 +475,7 @@ describe('Exercise', () => {
   });
 
   describe('PATCH /exercises/:exercise-id/comments/:comment-id', () => {
-    it('should update a comment of an exercise with a given id', function (done) {
+    it('should edit a comment of an exercise', function (done) {
       createExercise().then((result) => {
         chai.request(server)
           .patch(`/exercises/${result.exercise.id}/comments/${result.comment.id}`)
@@ -487,7 +487,7 @@ describe('Exercise', () => {
           });
       });
     });
-    it('should return 404 for non-existing comment', function (done) {
+    it('should return status code 404 for non-existing comment', function (done) {
       chai.request(server)
         .patch('/exercises/-1/comments/-1')
         .send({ text: 'Text' })
@@ -497,7 +497,7 @@ describe('Exercise', () => {
           done();
         });
     });
-    it('should return 400 for invalid input data', function (done) {
+    it('should return status code 400 for invalid input data', function (done) {
       createExercise().then((result) => {
         chai.request(server)
           .patch(`/exercises/${result.exercise.id}/comments/${result.comment.id}`)
@@ -512,7 +512,7 @@ describe('Exercise', () => {
   });
 
   describe('DELETE /exercises/:exercise-id/comments/:comment-id', () => {
-    it('should delete a comment of an exercise with a given id', function (done) {
+    it('should delete a comment of an exercise', function (done) {
       createExercise().then((result) => {
         chai.request(server)
           .delete(`/exercises/${result.exercise.id}/comments/${result.comment.id}`)
@@ -523,7 +523,7 @@ describe('Exercise', () => {
           });
       });
     });
-    it('should return 404 for non-existing comment', function (done) {
+    it('should return status code 404 for non-existing comment', function (done) {
       chai.request(server)
         .delete('/exercises/-1/comments/-1')
         .end((err, res) => {

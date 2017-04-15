@@ -59,7 +59,7 @@ describe('Group', () => {
   });
 
   describe('GET /groups', () => {
-    it('should get all groups', function (done) {
+    it('should list groups', function (done) {
       createGroup().then((result) => {
         chai.request(server)
           .get('/groups')
@@ -84,7 +84,7 @@ describe('Group', () => {
   });
 
   describe('GET /groups/:id', () => {
-    it('should get a group with a given id', function (done) {
+    it('should get a single group', function (done) {
       createGroup().then((result) => {
         chai.request(server)
           .get(`/groups/${result.group.id}`)
@@ -106,7 +106,7 @@ describe('Group', () => {
           });
       });
     });
-    it('should return 404 for non-existing group', function (done) {
+    it('should return status code 404 for non-existing group', function (done) {
       chai.request(server)
         .get('/groups/-1')
         .end((err, res) => {
@@ -118,7 +118,7 @@ describe('Group', () => {
   });
 
   describe('POST /groups', () => {
-    it('should add a group', function (done) {
+    it('should create a group', function (done) {
       chai.request(server)
         .post('/groups')
         .send(MockData.group)
@@ -138,7 +138,7 @@ describe('Group', () => {
           done();
         });
     });
-    it('should return 400 for invalid input data', function (done) {
+    it('should return status code 400 for invalid input data', function (done) {
       chai.request(server)
         .post('/groups')
         .send({})
@@ -151,7 +151,7 @@ describe('Group', () => {
   });
 
   describe('PATCH /groups/:id', () => {
-    it('should update group with a given id', function (done) {
+    it('should edit a group', function (done) {
       createGroup().then((result) => {
         chai.request(server)
           .patch(`/groups/${result.group.id}`)
@@ -174,7 +174,7 @@ describe('Group', () => {
           });
       });
     });
-    it('should return 404 for non-existing group', function (done) {
+    it('should return status code 404 for non-existing group', function (done) {
       createGroup().then((result) => {
         chai.request(server)
           .patch('/groups/-1')
@@ -186,7 +186,7 @@ describe('Group', () => {
           });
       });
     });
-    it('should return 400 for invalid input data', function (done) {
+    it('should return status code 400 for invalid input data', function (done) {
       createGroup().then((result) => {
         chai.request(server)
           .patch(`/groups/${result.group.id}`)
@@ -201,7 +201,7 @@ describe('Group', () => {
   });
 
   describe('DELETE /groups/:id', () => {
-    it('should delete group with a given id', function (done) {
+    it('should delete a group', function (done) {
       createGroup().then((result) => {
         chai.request(server)
           .delete(`/groups/${result.group.id}`)
@@ -212,7 +212,7 @@ describe('Group', () => {
           });
       });
     });
-    it('should return 404 for non-existing group', function (done) {
+    it('should return status code 404 for non-existing group', function (done) {
       chai.request(server)
         .delete('/groups/-1')
         .end((err, res) => {
@@ -224,7 +224,7 @@ describe('Group', () => {
   });
 
   describe('GET /groups/:id/members', () => {
-    it('should get members of a group with a given id', function (done) {
+    it('should list members of a group', function (done) {
       createGroup().then((result) => {
         chai.request(server)
           .get(`/groups/${result.group.id}/members`)
@@ -248,7 +248,7 @@ describe('Group', () => {
           });
       });
     });
-    it('should return 404 for non-existing group', function (done) {
+    it('should return status code 404 for non-existing group', function (done) {
       chai.request(server)
         .get('/groups/-1/members')
         .end((err, res) => {
@@ -260,7 +260,7 @@ describe('Group', () => {
   });
 
   describe('POST /groups/:id/members', () => {
-    it('should add an user to a group with a given id', function (done) {
+    it('should add an user to a group', function (done) {
       createGroup().then((result) => {
         chai.request(server)
           .post(`/groups/${result.group.id}/members`)
@@ -272,7 +272,7 @@ describe('Group', () => {
           });
       });
     });
-    it('should return 404 for non-existing group', function (done) {
+    it('should return status code 404 for non-existing group', function (done) {
       createGroup().then((result) => {
         chai.request(server)
           .post('/groups/-1/members')
@@ -284,7 +284,7 @@ describe('Group', () => {
           });
       });
     });
-    it('should return 400 for invalid input data', function (done) {
+    it('should return status code 400 for invalid input data', function (done) {
       createGroup().then((result) => {
         chai.request(server)
           .post(`/groups/${result.group.id}/members`)
@@ -299,7 +299,7 @@ describe('Group', () => {
   });
 
   describe('DELETE /groups/:group-id/members/:user-id', () => {
-    it('should delete an user of a group with a given id', function (done) {
+    it('should delete an user of a group', function (done) {
       createGroup().then((result) => {
         chai.request(server)
           .delete(`/groups/${result.group.id}/members/${result.user.id}`)
@@ -310,7 +310,7 @@ describe('Group', () => {
           });
       });
     });
-    it('should return 404 for non-existing group', function (done) {
+    it('should return status code 404 for non-existing group', function (done) {
       createGroup().then((result) => {
         chai.request(server)
           .delete(`/groups/-1/members/${result.user.id}`)
@@ -321,7 +321,7 @@ describe('Group', () => {
           });
       });
     });
-    it('should return 404 for non-existing user', function (done) {
+    it('should return status code 404 for non-existing user', function (done) {
       createGroup().then((result) => {
         chai.request(server)
           .delete(`/groups/${result.group.id}/members/-1`)
@@ -335,7 +335,7 @@ describe('Group', () => {
   });
 
   describe('GET /groups/:id/exercises', () => {
-    it('should get the exercises of a group with a given id', function (done) {
+    it('should list exercises of a group', function (done) {
       createGroup().then((result) => {
         chai.request(server)
           .get(`/groups/${result.group.id}/exercises`)
@@ -381,7 +381,7 @@ describe('Group', () => {
           });
       });
     });
-    it('should get the exercises of a group with a given id', function (done) {
+    it('should return status code 404 for non-existing group', function (done) {
       chai.request(server)
         .get('/groups/-1/exercises')
         .end((err, res) => {

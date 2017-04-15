@@ -20,7 +20,7 @@ describe('ExerciseType', () => {
   });
 
   describe('GET /exercise-types', () => {
-    it('should list all exercise-types', function (done) {
+    it('should list exercise types', function (done) {
       createExerciseType().then((exerciseType) => {
         chai.request(server)
           .get('/exercise-types')
@@ -45,7 +45,7 @@ describe('ExerciseType', () => {
   });
 
   describe('GET /exercise-types/:id', () => {
-    it('should get an exercise type with a given id', function (done) {
+    it('should get a single exercise type', function (done) {
       createExerciseType().then((exerciseType) => {
         chai.request(server)
           .get(`/exercise-types/${exerciseType.id}`)
@@ -67,7 +67,7 @@ describe('ExerciseType', () => {
           });
       });
     });
-    it('should return 404 for non-existing exercise type', function (done) {
+    it('should return status code 404 for non-existing exercise type', function (done) {
       chai.request(server)
         .get('/exercise-types/-1')
         .end((err, res) => {
@@ -79,7 +79,7 @@ describe('ExerciseType', () => {
   });
 
   describe('POST /exercise-types', () => {
-    it('should add an exercise-type', function (done) {
+    it('should create an exercise type', function (done) {
       chai.request(server)
         .post('/exercise-types')
         .send(MockData.exerciseType)
@@ -97,7 +97,7 @@ describe('ExerciseType', () => {
           done();
         });
     });
-    it('should return 400 if exercise type name is not included in request body', function (done) {
+    it('should return status code 400 if exercise type name is not included in request body', function (done) {
       chai.request(server)
         .post('/exercise-types')
         .send({})
@@ -110,7 +110,7 @@ describe('ExerciseType', () => {
   });
 
   describe('PATCH /exercise-types/:id', () => {
-    it('should update exercise-type with a given id', function (done) {
+    it('should edit an exercise type', function (done) {
       createExerciseType().then((exerciseType) => {
         chai.request(server)
           .patch(`/exercise-types/${exerciseType.id}`)
@@ -131,7 +131,7 @@ describe('ExerciseType', () => {
           });
       });
     });
-    it('should return 404 for non-existing exercise type', function (done) {
+    it('should return status code 404 for non-existing exercise type', function (done) {
       chai.request(server)
         .patch('/exercise-types/-1')
         .send({ name: 'Updated' })
@@ -141,7 +141,7 @@ describe('ExerciseType', () => {
           done();
         });
     });
-    it('should return 400 if exercise type name is not included in request body', function (done) {
+    it('should return status code 400 if exercise type name is not included in request body', function (done) {
       createExerciseType().then((exerciseType) => {
         chai.request(server)
           .patch(`/exercise-types/${exerciseType.id}`)
@@ -156,7 +156,7 @@ describe('ExerciseType', () => {
   });
 
   describe('DELETE /exercise-types/:id', () => {
-    it('should delete exercise-type with a given id', function (done) {
+    it('should delete an exercise type', function (done) {
       createExerciseType().then((exerciseType) => {
         chai.request(server)
           .delete(`/exercise-types/${exerciseType.id}`)
@@ -167,7 +167,7 @@ describe('ExerciseType', () => {
           });
       });
     });
-    it('should return 404 for non-existing exercise type', function (done) {
+    it('should return status code 404 for non-existing exercise type', function (done) {
       chai.request(server)
         .delete('/exercise-types/-1')
         .end((err, res) => {

@@ -58,7 +58,7 @@ describe('User', () => {
   });
 
   describe('GET /users/:id', () => {
-    it('should get an user with a given id', function (done) {
+    it('should get a single user', function (done) {
       createUser().then((result) => {
         chai.request(server)
           .get(`/users/${result.user.id}`)
@@ -80,7 +80,7 @@ describe('User', () => {
           });
       });
     });
-    it('should return 404 for non-existing user', function (done) {
+    it('should return status code 404 for non-existing user', function (done) {
       chai.request(server)
         .get('/users/-1')
         .end((err, res) => {
@@ -92,7 +92,7 @@ describe('User', () => {
   });
 
   describe('POST /users', () => {
-    it('should add an user', function (done) {
+    it('should create an user', function (done) {
       chai.request(server)
         .post('/users')
         .send(MockData.user)
@@ -112,7 +112,7 @@ describe('User', () => {
           done();
         });
     });
-    it('should return 400 for invalid input', function (done) {
+    it('should return status code 400 for invalid input', function (done) {
       chai.request(server)
         .post('/users')
         .send({})
@@ -125,7 +125,7 @@ describe('User', () => {
   });
 
   describe('PATCH /users/:id', () => {
-    it('should update user with a given id', function (done) {
+    it('should edit an user', function (done) {
       createUser().then((result) => {
         chai.request(server)
           .patch(`/users/${result.user.id}`)
@@ -148,7 +148,7 @@ describe('User', () => {
           });
       });
     });
-    it('should return 404 for non-existing user', function (done) {
+    it('should return status code 404 for non-existing user', function (done) {
       chai.request(server)
         .patch('/users/-1')
         .send({ name: 'Updated' })
@@ -158,7 +158,7 @@ describe('User', () => {
           done();
         });
     });
-    it('should return 400 for invalid input', function (done) {
+    it('should return status code 400 for invalid input', function (done) {
       createUser().then((result) => {
         chai.request(server)
           .patch(`/users/${result.user.id}`)
@@ -173,7 +173,7 @@ describe('User', () => {
   });
 
   describe('DELETE /users/:id', () => {
-    it('should delete user with a given id', function (done) {
+    it('should delete an user', function (done) {
       createUser().then((result) => {
         chai.request(server)
           .delete(`/users/${result.user.id}`)
@@ -184,7 +184,7 @@ describe('User', () => {
           });
       });
     });
-    it('should return 404 for non-existing user', function (done) {
+    it('should return status code 404 for non-existing user', function (done) {
       chai.request(server)
         .delete('/users/-1')
         .end((err, res) => {
@@ -196,7 +196,7 @@ describe('User', () => {
   });
 
   describe('GET /users/:id/groups', () => {
-    it('should get the groups of an user with a given id', function (done) {
+    it('should list groups of an user', function (done) {
       createUser().then((result) => {
         chai.request(server)
           .get(`/users/${result.user.id}/groups`)
@@ -218,7 +218,7 @@ describe('User', () => {
           });
       });
     });
-    it('should return 404 for non-existing user', function (done) {
+    it('should return status code 404 for non-existing user', function (done) {
       chai.request(server)
         .get('/users/-1/groups')
         .end((err, res) => {
@@ -230,7 +230,7 @@ describe('User', () => {
   });
 
   describe('GET /users/:id/exercises', () => {
-    it('should list all exercises of an user with a given id', function (done) {
+    it('should list exercises of an user', function (done) {
       createUser().then((result) => {
         chai.request(server)
           .get(`/users/${result.user.id}/exercises`)
@@ -271,7 +271,7 @@ describe('User', () => {
           });
       });
     });
-    it('should return 404 for non-existing user', function (done) {
+    it('should return status code 404 for non-existing user', function (done) {
       chai.request(server)
         .get('/users/-1/exercises')
         .end((err, res) => {
