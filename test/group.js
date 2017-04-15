@@ -81,6 +81,18 @@ describe('Group', () => {
           });
       });
     });
+    it('should return empty array when there are no groups', function (done) {
+      chai.request(server)
+        .get('/groups')
+        .end((err, res) => {
+          res.should.have.status(200);
+          res.should.be.json;
+          res.body.should.be.a('array');
+          res.body.should.be.empty;
+
+          done();
+        });
+    });
   });
 
   describe('GET /groups/:id', () => {
@@ -248,6 +260,20 @@ describe('Group', () => {
           });
       });
     });
+    it('should return empty array when a group has no members', function (done) {
+      Group.create(MockData.group).then((group) => {
+        chai.request(server)
+          .get(`/groups/${group.id}/members`)
+          .end((err, res) => {
+            res.should.have.status(200);
+            res.should.be.json;
+            res.body.should.be.a('array');
+            res.body.should.be.empty;
+
+            done();
+          });
+      });
+    });
     it('should return status code 404 for non-existing group', function (done) {
       chai.request(server)
         .get('/groups/-1/members')
@@ -376,6 +402,20 @@ describe('Group', () => {
 
             res.body[0].should.have.property('createdAt');
             res.body[0].should.have.property('updatedAt');
+
+            done();
+          });
+      });
+    });
+    it('should list exercises of a group', function (done) {
+      Group.create(MockData.group).then((group) => {
+        chai.request(server)
+          .get(`/groups/${group.id}/exercises`)
+          .end((err, res) => {
+            res.should.have.status(200);
+            res.should.be.json;
+            res.body.should.be.a('array');
+            res.body.should.be.empty;
 
             done();
           });

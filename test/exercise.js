@@ -94,6 +94,18 @@ describe('Exercise', () => {
           });
       });
     });
+    it('should return empty array for non-existing exercises', function (done) {
+      chai.request(server)
+        .get('/exercises')
+        .end((err, res) => {
+          res.should.have.status(200);
+          res.should.be.json;
+          res.body.should.be.a('array');
+          res.body.should.be.empty;
+
+          done();
+        });
+    });
   });
 
   describe('GET /exercises/:id', () => {
@@ -273,6 +285,20 @@ describe('Exercise', () => {
           });
       });
     });
+    it('should return an empty array when an exercise has no sets', function (done) {
+      Exercise.create(MockData.exercise).then((exercise) => {
+        chai.request(server)
+          .get(`/exercises/${exercise.id}/sets`)
+          .end((err, res) => {
+            res.should.have.status(200);
+            res.should.be.json;
+            res.body.should.be.a('array');
+            res.body.should.be.empty;
+
+            done();
+          });
+      });
+    });
     it('should return status code 404 for non-existing exercise', function (done) {
       createExercise().then((result) => {
         chai.request(server)
@@ -407,6 +433,20 @@ describe('Exercise', () => {
 
             res.body[0].should.have.property('createdAt');
             res.body[0].should.have.property('updatedAt');
+
+            done();
+          });
+      });
+    });
+    it('should return empty array when an exercise has no comments', function (done) {
+      Exercise.create(MockData.exercise).then((exercise) => {
+        chai.request(server)
+          .get(`/exercises/${exercise.id}/comments`)
+          .end((err, res) => {
+            res.should.have.status(200);
+            res.should.be.json;
+            res.body.should.be.a('array');
+            res.body.should.be.empty;
 
             done();
           });

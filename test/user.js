@@ -218,6 +218,20 @@ describe('User', () => {
           });
       });
     });
+    it('should return empty array when an user has no groups', function (done) {
+      User.create(MockData.user).then((user) => {
+        chai.request(server)
+          .get(`/users/${user.id}/groups`)
+          .end((err, res) => {
+            res.should.have.status(200);
+            res.should.be.json;
+            res.body.should.be.a('array');
+            res.body.should.be.empty;
+
+            done();
+          });
+      });
+    });
     it('should return status code 404 for non-existing user', function (done) {
       chai.request(server)
         .get('/users/-1/groups')
@@ -266,6 +280,20 @@ describe('User', () => {
             res.body[0].exerciseType.id.should.equal(result.exerciseType.id);
             res.body[0].exerciseType.should.have.property('name');
             res.body[0].exerciseType.name.should.equal(result.exerciseType.name);
+
+            done();
+          });
+      });
+    });
+    it('should return empty array when an user has no exercises', function (done) {
+      User.create(MockData.user).then((user) => {
+        chai.request(server)
+          .get(`/users/${user.id}/exercises`)
+          .end((err, res) => {
+            res.should.have.status(200);
+            res.should.be.json;
+            res.body.should.be.a('array');
+            res.body.should.be.empty;
 
             done();
           });

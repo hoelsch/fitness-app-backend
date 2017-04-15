@@ -42,6 +42,18 @@ describe('ExerciseType', () => {
           });
       });
     });
+    it('should return empty array for non-existing exercise types', function (done) {
+      chai.request(server)
+        .get('/exercise-types')
+        .end((err, res) => {
+          res.should.have.status(200);
+          res.should.be.json;
+          res.body.should.be.a('array');
+          res.body.should.be.empty;
+
+          done();
+        });
+    });
   });
 
   describe('GET /exercise-types/:id', () => {
