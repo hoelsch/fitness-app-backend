@@ -6,9 +6,9 @@ const config = require('../config/config.json')[process.env.NODE_ENV || 'develop
 const basename = path.basename(module.filename);
 const db = {};
 
-const sequelize = config.use_env_variable ?
-  new Sequelize(process.env[config.use_env_variable]) :
-  new Sequelize(config.database, config.username, config.password, config);
+const sequelize = config.use_env_variable
+  ? new Sequelize(process.env[config.use_env_variable])
+  : new Sequelize(config.database, config.username, config.password, config);
 
 fs.readdirSync(__dirname)
   .filter(file => (
