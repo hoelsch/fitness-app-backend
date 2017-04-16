@@ -1,6 +1,7 @@
 const express = require('express');
 const Joi = require('joi');
-const CustomError = require('../helpers/custom-error');
+const NotFoundError = require('../errors/not-found-error');
+const InvalidRequestBodyError = require('../errors/invalid-request-body-error');
 const User = require('../models').User;
 
 const router = express.Router();
@@ -21,7 +22,7 @@ router.get('/:id', (req, res, next) => (
       if (user) {
         res.json(user);
       } else {
-        next(new CustomError('User not found', 404));
+        next(new NotFoundError('User not found'));
       }
     })
 ));
@@ -44,7 +45,7 @@ router.post('/', (req, res, next) => {
   });
 
   if (error) {
-    next(new CustomError('Invalid request body', 400));
+    next(new InvalidRequestBodyError());
   } else {
     User.create({ name: req.body.name }).then(user => res.json(user));
   }
@@ -68,12 +69,12 @@ router.patch('/:id', (req, res, next) => {
   });
 
   if (error) {
-    next(new CustomError('Invalid request body', 400));
+    next(new InvalidRequestBodyError());
   } else {
     User.find({ where: { id: req.params.id } })
       .then((user) => {
         if (!user) {
-          next(new CustomError('User not found', 404));
+          next(new NotFoundError('User not found'));
         }
 
         return user.update(req.body);
@@ -92,7 +93,7 @@ router.delete('/:id', (req, res, next) => (
   User.find({ where: { id: req.params.id } })
     .then((user) => {
       if (!user) {
-        next(new CustomError('User not found', 404));
+        next(new NotFoundError('User not found'));
       }
 
       return user.destroy();
@@ -116,7 +117,7 @@ router.get('/:id/groups', (req, res, next) => (
   User.find({ where: { id: req.params.id } })
     .then((user) => {
       if (!user) {
-        next(new CustomError('User not found', 404));
+        next(new NotFoundError('User not found'));
       }
 
       return user.getGroups();
@@ -152,7 +153,7 @@ router.get('/:id/exercises', (req, res, next) => {
   User.find({ where: { id: req.params.id } })
     .then((foundUser) => {
       if (!foundUser) {
-        next(new CustomError('User not found', 404));
+        next(new NotFoundError('User not found'));
       }
 
       user = foundUser;

@@ -1,6 +1,7 @@
 const express = require('express');
 const Joi = require('joi');
-const CustomError = require('../helpers/custom-error');
+const NotFoundError = require('../errors/not-found-error');
+const InvalidRequestBodyError = require('../errors/invalid-request-body-error');
 const Exercise = require('../models').Exercise;
 const ExerciseType = require('../models').ExerciseType;
 const User = require('../models').User;
@@ -80,7 +81,7 @@ router.get('/:id', (req, res, next) => {
   Exercise.find({ where: { id: req.params.id } })
     .then((foundExercise) => {
       if (!foundExercise) {
-        throw new CustomError('Exercise not found', 404);
+        throw new NotFoundError('Exercise not found');
       }
 
       exercise = foundExercise;
@@ -136,7 +137,7 @@ router.post('/', (req, res, next) => {
   });
 
   if (error) {
-    next(new CustomError('Invalid request body', 400));
+    next(new InvalidRequestBodyError());
   } else {
     let exercise;
     let typeOfExercise;
@@ -205,12 +206,12 @@ router.patch('/:id', (req, res, next) => {
   });
 
   if (error) {
-    next(new CustomError('Invalid request body', 400));
+    next(new InvalidRequestBodyError());
   } else {
     Exercise.find({ where: { id: req.params.id } })
       .then((exercise) => {
         if (!exercise) {
-          throw new CustomError('Exercise not found', 404);
+          throw new NotFoundError('Exercise not found');
         }
 
         return exercise.update(req.body);
@@ -229,7 +230,7 @@ router.delete('/:id', (req, res, next) => (
   Exercise.find({ where: { id: req.params.id } })
     .then((exercise) => {
       if (!exercise) {
-        throw new CustomError('Exercise not found', 404);
+        throw new NotFoundError('Exercise not found');
       }
 
       return exercise.destroy();
@@ -255,7 +256,7 @@ router.get('/:id/sets', (req, res, next) => (
   Exercise.find({ where: { id: req.params.id } })
     .then((exercise) => {
       if (!exercise) {
-        throw new CustomError('Exercise not found', 404);
+        throw new NotFoundError('Exercise not found');
       }
 
       return exercise.getSets();
@@ -279,14 +280,14 @@ router.post('/:id/sets', (req, res, next) => {
   });
 
   if (error) {
-    next(new CustomError('Invalid request body', 400));
+    next(new InvalidRequestBodyError());
   } else {
     let exercise;
 
     Exercise.find({ where: { id: req.params.id } })
       .then((exer) => {
         if (!exer) {
-          throw new CustomError('Exercise not found', 404);
+          throw new NotFoundError('Exercise not found');
         }
 
         exercise = exer;
@@ -307,7 +308,7 @@ router.delete('/:exerciseId/sets/:setId', (req, res, next) => (
   Set.find({ where: { id: req.params.setId } })
     .then((set) => {
       if (!set) {
-        throw new CustomError('Set not found', 404);
+        throw new NotFoundError('Set not found');
       }
 
       return set.destroy();
@@ -331,12 +332,12 @@ router.patch('/:exerciseId/sets/:setId', (req, res, next) => {
   });
 
   if (error) {
-    next(new CustomError('Invalid request body', 400));
+    next(new InvalidRequestBodyError());
   } else {
     Set.find({ where: { id: req.params.setId } })
       .then((set) => {
         if (!set) {
-          throw new CustomError('Set not found', 404);
+          throw new NotFoundError('Set not found');
         }
 
         return set.update(req.body);
@@ -364,7 +365,7 @@ router.get('/:id/comments', (req, res, next) => {
   Exercise.find({ where: { id: req.params.id } })
     .then((exercise) => {
       if (!exercise) {
-        throw new CustomError('Exercise not found', 404);
+        throw new NotFoundError('Exercise not found');
       }
 
       return exercise.getComments();
@@ -402,7 +403,7 @@ router.post('/:id/comments', (req, res, next) => {
   });
 
   if (error) {
-    next(new CustomError('Invalid request body', 400));
+    next(new InvalidRequestBodyError());
   } else {
     let exercise;
     let comment;
@@ -410,7 +411,7 @@ router.post('/:id/comments', (req, res, next) => {
     Exercise.find({ where: { id: req.params.id } })
       .then((exer) => {
         if (!exer) {
-          throw new CustomError('Exercise not found', 404);
+          throw new NotFoundError('Exercise not found');
         }
 
         exercise = exer;
@@ -418,7 +419,7 @@ router.post('/:id/comments', (req, res, next) => {
       })
       .then((user) => {
         if (!user) {
-          throw new CustomError('User not found', 404);
+          throw new NotFoundError('User not found');
         }
 
         return Comment.create({ text: req.body.text });
@@ -446,12 +447,12 @@ router.patch('/:exerciseId/comments/:commentId', (req, res, next) => {
   });
 
   if (error) {
-    next(new CustomError('Invalid request body', 400));
+    next(new InvalidRequestBodyError());
   } else {
     Comment.find({ where: { id: req.params.commentId } })
     .then((comment) => {
       if (!comment) {
-        throw new CustomError('Comment not found', 404);
+        throw new NotFoundError('Comment not found');
       }
 
       return comment.update({ text: req.body.text });
@@ -470,7 +471,7 @@ router.delete('/:exerciseId/comments/:commentId', (req, res, next) => (
   Comment.find({ where: { id: req.params.commentId } })
     .then((comment) => {
       if (!comment) {
-        throw new CustomError('Comment not found', 404);
+        throw new NotFoundError('Comment not found');
       }
 
       return comment.destroy();
