@@ -247,7 +247,7 @@ router.delete('/:id', (req, res, next) => (
  * @apiSuccess {Object[]} body List of sets of an exercise.
  * @apiSuccess {Number} body.id ID of the set.
  * @apiSuccess {Number} body.numReps Number of reps.
- * @apiSuccess {Number} body.weight Weight.
+ * @apiSuccess {Number} body.weight Weight in kg.
  * @apiSuccess {Number} body.ExerciseId ID of the corresponding exercise.
  * @apiSuccess {String} body.createdAt Date of creation.
  * @apiSuccess {String} body.updatedAt Date of last update.
@@ -271,7 +271,7 @@ router.get('/:id/sets', (req, res, next) => (
  * @apiGroup Exercise
  *
  * @apiParam {Number} numReps Number of reps.
- * @apiParam {Number} weight Weight.
+ * @apiParam {Number} weight Weight in kg.
  */
 router.post('/:id/sets', (req, res, next) => {
   const { error } = Joi.validate(req.body, {
@@ -323,7 +323,7 @@ router.delete('/:exerciseId/sets/:setId', (req, res, next) => (
  * @apiGroup Exercise
  *
  * @apiParam {Number} [numRep] Optional number of reps.
- * @apiParam {Number} [weight] Weight.
+ * @apiParam {Number} [weight] Weight in kg.
  */
 router.patch('/:exerciseId/sets/:setId', (req, res, next) => {
   const { error } = Joi.validate(req.body, {
