@@ -1,6 +1,7 @@
 module.exports = (sequelize, DataTypes) => {
   const User = sequelize.define('User', {
     name: DataTypes.STRING,
+    totalWeightLifted: { type: DataTypes.DOUBLE, defaultValue: '0' },
   }, {
     classMethods: {
       associate: (models) => {
