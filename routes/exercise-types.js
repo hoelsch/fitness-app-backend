@@ -32,12 +32,12 @@ router.get('/', (req, res) => (
  * @apiSuccess {String} updatedAt Date of last update.
  */
 router.get('/:id', (req, res, next) => (
-  ExerciseType.find({ where: { id: req.params.id } })
+  ExerciseType.findById(req.params.id)
     .then((exerciseType) => {
-      if (exerciseType) {
-        res.json(exerciseType);
-      } else {
+      if (!exerciseType) {
         next(new NotFoundError('Exercise type not found'));
+      } else {
+        res.json(exerciseType);
       }
     })
 ));
@@ -56,7 +56,7 @@ router.get('/:id', (req, res, next) => (
  */
 router.post('/', (req, res, next) => {
   const { error } = Joi.validate(req.body, {
-    name: Joi.string().required(),
+    name: Joi.string().min(1).required(),
   });
 
   if (error) {
@@ -81,16 +81,16 @@ router.post('/', (req, res, next) => {
  */
 router.patch('/:id', (req, res, next) => {
   const { error } = Joi.validate(req.body, {
-    name: Joi.string().required(),
+    name: Joi.string().min(1).required(),
   });
 
   if (error) {
     next(new InvalidRequestBodyError());
   } else {
-    ExerciseType.find({ where: { id: req.params.id } })
+    ExerciseType.findById(req.params.id)
       .then((exerciseType) => {
         if (!exerciseType) {
-          next(new NotFoundError('Exercise type not found'));
+          throw new NotFoundError('Exercise type not found');
         }
 
         return exerciseType.update(req.body);
@@ -106,15 +106,14 @@ router.patch('/:id', (req, res, next) => {
  * @apiGroup ExerciseType
  */
 router.delete('/:id', (req, res, next) => (
-  ExerciseType.find({ where: { id: req.params.id } })
-    .then((exerciseType) => {
-      if (!exerciseType) {
-        next(new NotFoundError('Exercise type not found'));
+  ExerciseType.destroy({ where: { id: req.params.id } })
+    .then((numDeletedRows) => {
+      if (numDeletedRows === 0) {
+        throw new NotFoundError('Exercise type not found');
       }
 
-      return exerciseType.destroy();
+      res.sendStatus(204);
     })
-    .then(() => res.sendStatus(204))
     .catch(next)
 ));
 
