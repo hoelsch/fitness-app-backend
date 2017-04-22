@@ -309,4 +309,23 @@ describe('User', () => {
         });
     });
   });
+
+  describe('GET /users/:id/statistics', () => {
+    it('should get statistics of an user', function (done) {
+      createUser().then((result) => {
+        chai.request(server)
+          .get(`/users/${result.user.id}/statistics`)
+          .end((err, res) => {
+            res.should.have.status(200);
+            res.should.be.json;
+            res.body.should.be.a('object');
+
+            res.body.should.have.property('totalWeightLifted');
+            res.body.totalWeightLifted.should.equal(0);
+
+            done();
+          });
+      });
+    });
+  });
 });

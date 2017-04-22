@@ -1,7 +1,6 @@
 const chai = require('chai');
 const chaiHttp = require('chai-http');
 const server = require('../bin/www');
-const should = chai.should();
 const Exercise = require('../models').Exercise;
 const ExerciseType = require('../models').ExerciseType;
 const Set = require('../models').Set;
@@ -9,6 +8,7 @@ const User = require('../models').User;
 const Comment = require('../models').Comment;
 const MockData = require('./mock-data');
 
+const should = chai.should();
 chai.use(chaiHttp);
 
 /**
@@ -26,7 +26,9 @@ function createExercise() {
       Exercise.create(MockData.exercise),
       ExerciseType.create(MockData.exerciseType),
       Set.create(MockData.set),
-      User.create(MockData.user),
+      User.create(Object.assign({}, MockData.user, {
+        totalWeightLifted: MockData.set.numReps * MockData.set.weight,
+      })),
       Comment.create(MockData.comment),
     ])
       .then((values) => {
@@ -185,7 +187,13 @@ describe('Exercise', () => {
             res.body.should.have.property('exerciseType');
             res.body.exerciseType.should.have.property('id');
 
-            done();
+            // refresh user record and check if lifted weight is updated correctly
+            user.reload().then((reloadedUser) => {
+              reloadedUser.totalWeightLifted.should.equal(
+                MockData.set.numReps * MockData.set.weight);
+
+              done();
+            });
           });
       });
     });
@@ -208,11 +216,50 @@ describe('Exercise', () => {
       createExercise().then((result) => {
         chai.request(server)
           .patch(`/exercises/${result.exercise.id}`)
-          .send({ note: 'Updated' })
+          .send({
+            note: 'Updated',
+            exerciseTypeName: 'Updated',
+            sets: [{
+              numReps: result.set.numReps + 1,
+              weight: result.set.weight + 1,
+            }],
+          })
           .end((err, res) => {
             res.should.have.status(204);
 
-            done();
+            Exercise.find({ where: { id: result.exercise.id } })
+              .then((updatedExercise) => {
+                should.exist(updatedExercise);
+                updatedExercise.note.should.equal('Updated');
+
+                return Promise.all([
+                  updatedExercise.getExerciseType(),
+                  updatedExercise.getSets(),
+                  updatedExercise.getUser(),
+                ]);
+              })
+              .then((relatedDataOfExercise) => {
+                const updatedExerciseType = relatedDataOfExercise[0];
+                const updatedSets = relatedDataOfExercise[1];
+                const userOfUpdatedExercise = relatedDataOfExercise[2];
+
+                should.exist(updatedExerciseType);
+                updatedExerciseType.name.should.equal('Updated');
+
+                should.exist(updatedSets);
+                updatedSets.should.be.a('array');
+                updatedSets[0].should.have.property('numReps');
+                updatedSets[0].numReps.should.equal(result.set.numReps + 1);
+                updatedSets[0].should.have.property('weight');
+                updatedSets[0].weight.should.equal(result.set.weight + 1);
+
+                should.exist(userOfUpdatedExercise);
+                userOfUpdatedExercise.should.have.property('totalWeightLifted');
+                userOfUpdatedExercise.totalWeightLifted.should.equal(
+                  updatedSets[0].numReps * updatedSets[0].weight);
+
+                done();
+              });
           });
       });
     });
@@ -238,6 +285,18 @@ describe('Exercise', () => {
           });
       });
     });
+    it('should return status code 400 for empty request body', function (done) {
+      createExercise().then((result) => {
+        chai.request(server)
+          .patch(`/exercises/${result.exercise.id}`)
+          .send({})
+          .end((err, res) => {
+            res.should.have.status(400);
+
+            done();
+          });
+      });
+    });
   });
 
   describe('DELETE /exercises/:id', () => {
@@ -248,7 +307,16 @@ describe('Exercise', () => {
           .end((err, res) => {
             res.should.have.status(204);
 
-            done();
+            result.user.reload()
+              .then((reloadedUser) => {
+                reloadedUser.totalWeightLifted.should.equal(0);
+                return Exercise.find({ where: { id: result.exercise.id } });
+              })
+              .then((reloadedExercise) => {
+                should.not.exist(reloadedExercise);
+
+                done();
+              });
           });
       });
     });
@@ -319,9 +387,38 @@ describe('Exercise', () => {
           .post(`/exercises/${result.exercise.id}/sets`)
           .send({ numReps: 1, weight: 1 })
           .end((err, res) => {
-            res.should.have.status(204);
+            res.should.have.status(200);
+            res.body.should.be.a('object');
 
-            done();
+            res.body.should.have.property('id');
+            res.body.should.have.property('updatedAt');
+            res.body.should.have.property('createdAt');
+
+            res.body.should.have.property('numReps');
+            res.body.numReps.should.equal(1);
+
+            res.body.should.have.property('weight');
+            res.body.weight.should.equal(1);
+
+            res.body.should.have.property('ExerciseId');
+            res.body.ExerciseId.should.equal(result.exercise.id);
+
+            result.exercise.getSets()
+              .then((sets) => {
+                should.exist(sets);
+                sets.should.be.a('array');
+                sets.should.have.lengthOf(2);
+
+                return result.user.reload();
+              })
+              .then((user) => {
+                should.exist(user);
+                const oldTotalWeightLifted = result.set.numReps * result.set.weight;
+                const newTotalWeightLifted = oldTotalWeightLifted + 1;
+                user.totalWeightLifted.should.equal(newTotalWeightLifted);
+
+                done();
+              });
           });
       });
     });
@@ -357,18 +454,41 @@ describe('Exercise', () => {
           .end((err, res) => {
             res.should.have.status(204);
 
-            done();
+            Set.find({ where: { id: result.set.id } })
+              .then((set) => {
+                should.not.exist(set);
+                return result.user.reload();
+              })
+              .then((reloadedUser) => {
+                should.exist(reloadedUser);
+                reloadedUser.totalWeightLifted.should.equal(0);
+
+                done();
+              });
           });
       });
     });
     it('should return status code 404 for non-existing set', function (done) {
-      chai.request(server)
-        .delete('/exercises/-1/sets/-1')
-        .end((err, res) => {
-          res.should.have.status(404);
+      createExercise().then((result) => {
+        chai.request(server)
+          .delete(`/exercises/${result.exercise.id}/sets/-1`)
+          .end((err, res) => {
+            res.should.have.status(404);
 
-          done();
-        });
+            done();
+          });
+      });
+    });
+    it('should return status code 404 for non-existing exercise', function (done) {
+      createExercise().then((result) => {
+        chai.request(server)
+          .delete(`/exercises/-1/sets/${result.set.id}`)
+          .end((err, res) => {
+            res.should.have.status(404);
+
+            done();
+          });
+      });
     });
   });
 
@@ -377,23 +497,56 @@ describe('Exercise', () => {
       createExercise().then((result) => {
         chai.request(server)
           .patch(`/exercises/${result.exercise.id}/sets/${result.set.id}`)
-          .send({ numReps: 1, weight: 1 })
+          .send({
+            numReps: result.set.numReps + 1,
+            weight: result.set.weight + 1,
+          })
           .end((err, res) => {
             res.should.have.status(204);
+
+            const oldNumReps = result.set.numReps;
+            const oldWeight = result.set.weight;
+
+            result.set.reload()
+              .then((reloadedSet) => {
+                should.exist(reloadedSet);
+                reloadedSet.numReps.should.equal(oldNumReps + 1);
+                reloadedSet.weight.should.equal(oldWeight + 1);
+
+                return result.user.reload();
+              })
+              .then((reloadedUser) => {
+                should.exist(reloadedUser);
+                reloadedUser.totalWeightLifted.should.equal((oldNumReps + 1) * (oldWeight + 1));
+
+                done();
+              });
+          });
+      });
+    });
+    it('should return status code 404 for non-existing set', function (done) {
+      createExercise().then((result) => {
+        chai.request(server)
+          .patch(`/exercises/${result.exercise.id}/sets/-1`)
+          .send({ numReps: 1, weight: 1 })
+          .end((err, res) => {
+            res.should.have.status(404);
 
             done();
           });
       });
     });
-    it('should return status code 404 for non-existing set', function (done) {
-      chai.request(server)
-        .patch('/exercises/-1/sets/-1')
-        .send({ numReps: 1, weight: 1 })
-        .end((err, res) => {
-          res.should.have.status(404);
+    it('should return status code 404 for non-existing exercise', function (done) {
+      createExercise().then((result) => {
+        chai.request(server)
+          .patch(`/exercises/-1/sets/${result.set.id}`)
+          .send({ numReps: 1, weight: 1 })
+          .end((err, res) => {
+            res.should.have.status(404);
 
-          done();
-        });
+            done();
+          });
+      });
     });
     it('should return status code 400 for invalid input data', function (done) {
       createExercise().then((result) => {
