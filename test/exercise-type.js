@@ -106,7 +106,13 @@ describe('ExerciseType', () => {
           res.body.should.have.property('createdAt');
           res.body.should.have.property('updatedAt');
 
-          done();
+          ExerciseType.findById(res.body.id)
+            .then((exerciseType) => {
+              should.exist(exerciseType);
+              exerciseType.name.should.equal(MockData.exerciseType.name);
+
+              done();
+            });
         });
     });
     it('should return status code 400 if exercise type name is not included in request body', function (done) {
@@ -139,7 +145,13 @@ describe('ExerciseType', () => {
             res.body.should.have.property('createdAt');
             res.body.should.have.property('updatedAt');
 
-            done();
+            ExerciseType.findById(exerciseType.id)
+              .then((exerciseTypeStoredInDb) => {
+                should.exist(exerciseTypeStoredInDb);
+                exerciseTypeStoredInDb.name.should.equal('Updated');
+
+                done();
+              });
           });
       });
     });
@@ -175,7 +187,12 @@ describe('ExerciseType', () => {
           .end((err, res) => {
             res.should.have.status(204);
 
-            done();
+            ExerciseType.findById(exerciseType.id)
+              .then((exerciseTypeStoredInDb) => {
+                should.not.exist(exerciseTypeStoredInDb);
+
+                done();
+              });
           });
       });
     });
