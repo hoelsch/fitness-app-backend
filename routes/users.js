@@ -182,4 +182,23 @@ router.get('/:id/exercises', (req, res, next) => {
     .catch(next);
 });
 
+/**
+ * @api {get} /users/:id/statistics Get statistics of an user
+ * @apiName GetUserStatistics
+ * @apiGroup User
+ *
+ * @apiSuccess {Number} totalWeightLifted Total weight lifted by an user (in tons).
+ */
+router.get('/:id/statistics', (req, res, next) => (
+  User.find({ where: { id: req.params.id } })
+    .then((user) => {
+      if (!user) {
+        next(new NotFoundError('User not found'));
+      }
+
+      res.json({ totalWeightLifted: user.totalWeightLifted });
+    })
+    .catch(next)
+));
+
 module.exports = router;
