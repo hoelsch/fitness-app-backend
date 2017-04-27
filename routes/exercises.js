@@ -385,7 +385,7 @@ router.post('/:id/sets', (req, res, next) => {
         const newTotalWeightLifted = user.totalWeightLifted + (req.body.numReps * req.body.weight);
         return user.update({ totalWeightLifted: newTotalWeightLifted });
       })
-      .then(() => Set.create({ numReps: req.body.numReps, weight: req.body.weight }))
+      .then(() => Set.create(req.body))
       .then((newSet) => {
         set = newSet;
         return set.setExercise(exercise);
@@ -451,7 +451,7 @@ router.patch('/:exerciseId/sets/:setId', (req, res, next) => {
         }
 
         oldWeightOfSet = set.numReps * set.weight;
-        return set.update({ numReps: req.body.numReps, weight: req.body.weight });
+        return set.update(req.body);
       })
       .then(() => Exercise.find({ where: { id: req.params.exerciseId } }))
       .then((exercise) => {
