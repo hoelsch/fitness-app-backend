@@ -7,6 +7,7 @@ const ExerciseType = require('../models').ExerciseType;
 const User = require('../models').User;
 const Set = require('../models').Set;
 const Comment = require('../models').Comment;
+const sequelize = require('../models').sequelize;
 
 const router = express.Router();
 
@@ -25,39 +26,16 @@ const router = express.Router();
  * @apiSuccess {String} body.updatedAt Date of last update.
  */
 router.get('/', (req, res) => {
-  let exercises;
-  let userOfExercises;
-  let typesOfExercises;
-
-  Exercise.findAll()
-    .then((allExercises) => {
-      exercises = allExercises;
-      // get user of each exercise
-      return Promise.all(exercises.map(exercise => exercise.getUser()));
-    })
-    .then((users) => {
-      userOfExercises = users;
-      // get type of each exercise
-      return Promise.all(exercises.map(exercise => exercise.getExerciseType()));
-    })
-    .then((exerciseTypes) => {
-      typesOfExercises = exerciseTypes;
-      // get sets of each exercise
-      return Promise.all(exercises.map(exercise => exercise.getSets()));
-    })
-    .then((setsOfExercises) => {
-      // create result object that will be sent to client
-      const result = exercises.map((exercise, index) => ({
-        id: exercise.id,
-        note: exercise.note,
-        createdAt: exercise.createdAt,
-        sets: setsOfExercises[index],
-        user: userOfExercises[index],
-        exerciseType: typesOfExercises[index],
-      }));
-
-      res.json(result);
-    });
+  Exercise.findAll({ include: [User, ExerciseType, Set] })
+    .then(exercises => res.json(exercises.map(exercise => ({
+      id: exercise.id,
+      note: exercise.note,
+      sets: exercise.Sets,
+      user: exercise.User,
+      exerciseType: exercise.ExerciseType,
+      createdAt: exercise.createdAt,
+      updatedAt: exercise.updatedAt,
+    }))));
 });
 
 /**
@@ -74,38 +52,22 @@ router.get('/', (req, res) => {
  * @apiSuccess {String} updatedAt Date of last update.
  */
 router.get('/:id', (req, res, next) => {
-  let exercise;
-  let userOfExercise;
-  let typeOfExercise;
-
-  Exercise.find({ where: { id: req.params.id } })
-    .then((foundExercise) => {
-      if (!foundExercise) {
+  Exercise.findAll({ where: { id: req.params.id }, include: [User, ExerciseType, Set] })
+    .then((exercises) => {
+      const exercise = exercises[0];
+      if (!exercise) {
         throw new NotFoundError('Exercise not found');
       }
 
-      exercise = foundExercise;
-      return exercise.getUser();
-    })
-    .then((user) => {
-      userOfExercise = user;
-      return exercise.getExerciseType();
-    })
-    .then((exerciseType) => {
-      typeOfExercise = exerciseType;
-      return exercise.getSets();
-    })
-    .then((setsOfExercise) => {
-      const result = {
+      res.json({
         id: exercise.id,
         note: exercise.note,
+        sets: exercise.Sets,
+        user: exercise.User,
+        exerciseType: exercise.ExerciseType,
         createdAt: exercise.createdAt,
-        sets: setsOfExercise,
-        user: userOfExercise,
-        exerciseType: typeOfExercise,
-      };
-
-      res.json(result);
+        updatedAt: exercise.updatedAt,
+      });
     })
     .catch(next);
 });
@@ -142,54 +104,46 @@ router.post('/', (req, res, next) => {
   if (error) {
     next(new InvalidRequestBodyError());
   } else {
-    let exercise;
-    let typeOfExercise;
-    let userOfExercise;
-    let setsOfExercise;
+    sequelize.transaction(() => {
+      let exercise;
+      let typeOfExercise;
+      let userOfExercise;
+      let setsOfExercise;
 
-    // find user of the exercise
-    User.find({ where: { id: req.body.userId } })
-      .then((user) => {
-        if (!user) {
-          throw new NotFoundError('User not found');
-        }
+      // find user of the exercise
+      return User.findById(req.body.userId)
+        .then((user) => {
+          if (!user) {
+            throw new NotFoundError('User not found');
+          }
 
-        userOfExercise = user;
-        // update total weight lifted by the user
-        let totalWeight = userOfExercise.totalWeightLifted;
-        const sets = req.body.sets;
-        sets.forEach((set) => { totalWeight += set.numReps * set.weight; });
+          userOfExercise = user;
+          // update total weight lifted by the user
+          let totalWeight = userOfExercise.totalWeightLifted;
+          const sets = req.body.sets;
+          sets.forEach((set) => { totalWeight += set.numReps * set.weight; });
 
-        return user.update({ totalWeightLifted: totalWeight });
-      })
-      // find type of exercise
-      .then(() => ExerciseType.find({ where: { name: req.body.exerciseTypeName } }))
-      .then((exerciseType) => {
-        if (!exerciseType) {
-          // exercise type does not exist --> create a new one
-          return ExerciseType.create({ name: req.body.exerciseTypeName });
-        }
-
-        return exerciseType;
-      })
-      .then((exerciseType) => {
-        typeOfExercise = exerciseType;
-        return Exercise.create({ note: req.body.note });
-      })
-      .then((newExercise) => {
-        exercise = newExercise;
-        // create relationship between exercise and its type
-        return exercise.setExerciseType(typeOfExercise);
-      })
-      .then(() => exercise.setUser(req.body.userId))
-      .then(() => Promise.all(req.body.sets.map(set => Set.create(set))))
-      .then((sets) => {
-        setsOfExercise = sets;
-        return Promise.all(setsOfExercise.map(set => set.setExercise(exercise)));
-      })
-      .then(() => {
-        // create response object
-        const result = {
+          return user.update({ totalWeightLifted: totalWeight });
+        })
+        // find type of exercise
+        .then(() => ExerciseType.findOrCreate({ where: { name: req.body.exerciseTypeName } }))
+        .spread((exerciseType) => {
+          typeOfExercise = exerciseType;
+          return Exercise.create({ note: req.body.note });
+        })
+        .then((newExercise) => {
+          exercise = newExercise;
+          // create relationship between exercise and its type
+          return exercise.setExerciseType(typeOfExercise);
+        })
+        .then(() => exercise.setUser(req.body.userId))
+        .then(() => Promise.all(req.body.sets.map(set => Set.create(set))))
+        .then((sets) => {
+          setsOfExercise = sets;
+          return exercise.setSets(setsOfExercise);
+        })
+        // create and return response object
+        .then(() => ({
           id: exercise.id,
           note: exercise.note,
           createdAt: exercise.createdAt,
@@ -197,10 +151,10 @@ router.post('/', (req, res, next) => {
           user: userOfExercise,
           sets: setsOfExercise,
           exerciseType: typeOfExercise,
-        };
-
-        res.json(result);
-      });
+        }));
+    })
+      .then(result => res.json(result))
+      .catch(next);
   }
 });
 
@@ -226,58 +180,60 @@ router.patch('/:id', (req, res, next) => {
   if (error) {
     next(new InvalidRequestBodyError());
   } else {
-    let exercise;
-    let oldSetsOfExercise;
-    let weightOfOldSets = 0;
-    let weightOfNewSets = 0;
-    const newSetsOfExercise = req.body.sets;
+    sequelize.transaction(() => {
+      let exercise;
+      let oldSetsOfExercise;
+      let weightOfOldSets = 0;
+      let weightOfNewSets = 0;
+      const newSetsOfExercise = req.body.sets;
 
-    Exercise.find({ where: { id: req.params.id } })
-      .then((foundExercise) => {
-        if (!foundExercise) {
-          throw new NotFoundError('Exercise not found');
-        }
+      return Exercise.findById(req.params.id)
+        .then((foundExercise) => {
+          if (!foundExercise) {
+            throw new NotFoundError('Exercise not found');
+          }
 
-        exercise = foundExercise;
-        // check if the note of the exercise has to be updated
-        return req.body.note && exercise.update({ note: req.body.note });
-      })
-      // check if type of exercise has to be changed
-      .then(() => req.body.exerciseTypeName && ExerciseType.findOrCreate({
-        where: { name: req.body.exerciseTypeName },
-      }))
-      .spread(exerciseType => exerciseType && exercise.setExerciseType(exerciseType))
-      // check if sets have to be updated
-      // if yes --> get existing sets of exercise
-      .then(() => req.body.sets && exercise.getSets())
-      // if sets have to be updated, remove old sets
-      .then((sets) => {
-        oldSetsOfExercise = sets;
-        if (oldSetsOfExercise) {
-          // before deleting the old sets, we have to get their total weight
-          // --> the old total weight has to be subtracted from the total weight lifted by the user
-          oldSetsOfExercise.forEach((oldSet) => {
-            weightOfOldSets += oldSet.numReps * oldSet.weight;
-          });
+          exercise = foundExercise;
+          // check if the note of the exercise has to be updated
+          return req.body.note && exercise.update({ note: req.body.note });
+        })
+        // check if type of exercise has to be changed
+        .then(() => req.body.exerciseTypeName && ExerciseType.findOrCreate({
+          where: { name: req.body.exerciseTypeName },
+        }))
+        .spread(exerciseType => exerciseType && exercise.setExerciseType(exerciseType))
+        // check if sets have to be updated
+        // if yes --> get existing sets of exercise
+        .then(() => req.body.sets && exercise.getSets())
+        // if sets have to be updated, remove old sets
+        .then((sets) => {
+          oldSetsOfExercise = sets;
+          if (oldSetsOfExercise) {
+            // before deleting the old sets, we have to get their total weight
+            // the old total weight has to be subtracted from the total weight lifted by the user
+            oldSetsOfExercise.forEach((oldSet) => {
+              weightOfOldSets += oldSet.numReps * oldSet.weight;
+            });
 
-          // compute total weight of new sets
-          newSetsOfExercise.forEach((newSet) => {
-            weightOfNewSets += newSet.numReps * newSet.weight;
-          });
-        }
+            // compute total weight of new sets
+            newSetsOfExercise.forEach((newSet) => {
+              weightOfNewSets += newSet.numReps * newSet.weight;
+            });
+          }
 
-        // delete old sets
-        return newSetsOfExercise && Promise.all(oldSetsOfExercise.map(set => set.destroy()));
-      })
-      // create new sets
-      .then(() => newSetsOfExercise && Promise.all(newSetsOfExercise.map(set => Set.create(set))))
-      // add relationship between exercise and new sets
-      .then(newSets => newSets && Promise.all(newSets.map(set => set.setExercise(exercise))))
-      // get user to update its total lifted weight
-      .then(() => newSetsOfExercise && exercise.getUser())
-      .then(user => user && user.update({
-        totalWeightLifted: (user.totalWeightLifted + (weightOfNewSets - weightOfOldSets)),
-      }))
+          // delete old sets
+          return newSetsOfExercise && Set.destroy({ where: { ExerciseId: exercise.id } });
+        })
+        // create new sets
+        .then(() => newSetsOfExercise && Promise.all(newSetsOfExercise.map(set => Set.create(set))))
+        // add relationship between exercise and new sets
+        .then(newSets => newSets && exercise.setSets(newSets))
+        // update total lifted weight of user (but only when the exercise sets were updated)
+        .then(() => newSetsOfExercise && exercise.getUser())
+        .then(user => newSetsOfExercise && user.update({
+          totalWeightLifted: (user.totalWeightLifted + (weightOfNewSets - weightOfOldSets)),
+        }));
+    })
       .then(() => res.sendStatus(204))
       .catch(next);
   }
@@ -289,31 +245,35 @@ router.patch('/:id', (req, res, next) => {
  * @apiGroup Exercise
  */
 router.delete('/:id', (req, res, next) => {
-  let exercise;
-  let totalWeightOfExercise = 0;
+  sequelize.transaction(() => (
+    Exercise.findAll({ where: { id: req.params.id }, include: [Set, User] })
+      .then((exercises) => {
+        const exercise = exercises[0];
+        if (!exercise) {
+          throw new NotFoundError('Exercise not found');
+        }
 
-  Exercise.find({ where: { id: req.params.id } })
-    .then((foundExercise) => {
-      if (!foundExercise) {
-        throw new NotFoundError('Exercise not found');
-      }
+        const sets = exercise.Sets;
+        const user = exercise.User;
 
-      exercise = foundExercise;
-      // before the exercise can be deleted,
-      // the total weight lifted by the user has to be udpated
-      // --> as a first step get sets of this exercise to compute total weight
-      return exercise.getSets();
-    })
-    .then((sets) => {
-      sets.forEach((set) => { totalWeightOfExercise += set.numReps * set.weight; });
-      // get user of the exercise to subtract the weight of this exercise of its total weight
-      return exercise.getUser();
-    })
-    .then((user) => {
-      const newTotalWeightLifted = user.totalWeightLifted - totalWeightOfExercise;
-      return user.update({ totalWeightLifted: newTotalWeightLifted });
-    })
-    .then(() => exercise.destroy())
+        if (sets && sets.length > 0) {
+          // before the exercise can be deleted,
+          // the total weight lifted by the user has to be udpated
+          const totalWeightOfExercise = sets.reduce((totalWeight, set) => (
+            totalWeight + (set.numReps * set.weight)
+          ), 0);
+
+          const newTotalWeightLifted = user.totalWeightLifted - totalWeightOfExercise;
+
+          return Promise.all([
+            user.update({ totalWeightLifted: newTotalWeightLifted }),
+            exercise.destroy(),
+          ]);
+        }
+
+        return exercise.destroy();
+      })
+  ))
     .then(() => res.sendStatus(204))
     .catch(next);
 });
@@ -331,18 +291,18 @@ router.delete('/:id', (req, res, next) => {
  * @apiSuccess {String} body.createdAt Date of creation.
  * @apiSuccess {String} body.updatedAt Date of last update.
  */
-router.get('/:id/sets', (req, res, next) => (
-  Exercise.find({ where: { id: req.params.id } })
-    .then((exercise) => {
+router.get('/:id/sets', (req, res, next) => {
+  Exercise.findAll({ where: { id: req.params.id }, include: [Set] })
+    .then((exercises) => {
+      const exercise = exercises[0];
       if (!exercise) {
         throw new NotFoundError('Exercise not found');
       }
 
-      return exercise.getSets();
+      res.json(exercise.Sets);
     })
-    .then(sets => res.json(sets))
-    .catch(next)
-));
+    .catch(next);
+});
 
 /**
  * @api {post} /exercises/:id/sets Create a set for an exercise
@@ -355,7 +315,6 @@ router.get('/:id/sets', (req, res, next) => (
  * @apiSuccess {Number} id ID of the set.
  * @apiSuccess {Number} numReps Number of reps.
  * @apiSuccess {Number} weight Weight in kg.
- * @apiSuccess {Number} ExerciseId ID of the corresponding exercise.
  * @apiSuccess {String} createdAt Date of creation.
  * @apiSuccess {String} updatedAt Date of last update.
  */
@@ -368,29 +327,32 @@ router.post('/:id/sets', (req, res, next) => {
   if (error) {
     next(new InvalidRequestBodyError());
   } else {
-    let exercise;
-    let set;
+    sequelize.transaction(() => {
+      let exercise;
+      let set;
 
-    Exercise.find({ where: { id: req.params.id } })
-      .then((exer) => {
-        if (!exer) {
-          throw new NotFoundError('Exercise not found');
-        }
+      return Exercise.findAll({ where: { id: req.params.id }, include: [User] })
+        .then((exercises) => {
+          exercise = exercises[0];
+          if (!exercise) {
+            throw new NotFoundError('Exercise not found');
+          }
 
-        exercise = exer;
-        // find user to update total weight lifted
-        return exercise.getUser();
-      })
-      .then((user) => {
-        const newTotalWeightLifted = user.totalWeightLifted + (req.body.numReps * req.body.weight);
-        return user.update({ totalWeightLifted: newTotalWeightLifted });
-      })
-      .then(() => Set.create(req.body))
-      .then((newSet) => {
-        set = newSet;
-        return set.setExercise(exercise);
-      })
-      .then(() => res.json(set))
+          const user = exercise.User;
+          // update total weight lifted by the user
+          const newTotalWeightLifted = user.totalWeightLifted
+            + (req.body.numReps * req.body.weight);
+
+          return user.update({ totalWeightLifted: newTotalWeightLifted });
+        })
+        .then(() => Set.create(req.body))
+        .then((newSet) => {
+          set = newSet;
+          return exercise.addSet(set);
+        })
+        .then(() => set);
+    })
+      .then(result => res.json(result))
       .catch(next);
   }
 });
@@ -401,26 +363,30 @@ router.post('/:id/sets', (req, res, next) => {
  * @apiGroup Exercise
  */
 router.delete('/:exerciseId/sets/:setId', (req, res, next) => {
-  let totalWeightOfSet;
+  sequelize.transaction(() => {
+    let totalWeightOfSet = 0;
 
-  Set.find({ where: { id: req.params.setId } })
-    .then((set) => {
-      if (!set) {
-        throw new NotFoundError('Set not found');
-      }
+    return Set.findById(req.params.setId)
+      .then((set) => {
+        if (!set) {
+          throw new NotFoundError('Set not found');
+        }
 
-      totalWeightOfSet = set.numReps * set.weight;
-      return set.destroy();
-    })
-    .then(() => Exercise.find({ where: { id: req.params.exerciseId } }))
-    .then((exercise) => {
-      if (!exercise) {
-        throw new NotFoundError('Exercise not found');
-      }
+        // remember weight of set to update user
+        totalWeightOfSet = set.numReps * set.weight;
+        return set.destroy();
+      })
+      .then(() => Exercise.findAll({ where: { id: req.params.exerciseId }, include: [User] }))
+      .then((exercises) => {
+        const exercise = exercises[0];
+        if (!exercise) {
+          throw new NotFoundError('Exercise not found');
+        }
 
-      return exercise.getUser();
-    })
-    .then(user => user.update({ totalWeightLifted: user.totalWeightLifted - totalWeightOfSet }))
+        const user = exercise.User;
+        return user.update({ totalWeightLifted: user.totalWeightLifted - totalWeightOfSet });
+      });
+  })
     .then(() => res.sendStatus(204))
     .catch(next);
 });
@@ -439,34 +405,38 @@ router.patch('/:exerciseId/sets/:setId', (req, res, next) => {
     weight: Joi.number().optional(),
   });
 
-  let oldWeightOfSet;
-
   if (error) {
     next(new InvalidRequestBodyError());
   } else {
-    Set.find({ where: { id: req.params.setId } })
-      .then((set) => {
-        if (!set) {
-          throw new NotFoundError('Set not found');
-        }
+    sequelize.transaction(() => {
+      let oldWeightOfSet;
 
-        oldWeightOfSet = set.numReps * set.weight;
-        return set.update(req.body);
-      })
-      .then(() => Exercise.find({ where: { id: req.params.exerciseId } }))
-      .then((exercise) => {
-        if (!exercise) {
-          throw new NotFoundError('Exercise not found');
-        }
+      return Set.findById(req.params.setId)
+        .then((set) => {
+          if (!set) {
+            throw new NotFoundError('Set not found');
+          }
 
-        return exercise.getUser();
-      })
-      .then((user) => {
-        const newWeightOfSet = req.body.numReps * req.body.weight;
-        return user.update({
-          totalWeightLifted: user.totalWeightLifted + (newWeightOfSet - oldWeightOfSet),
+          // remember old weight of set to update user
+          oldWeightOfSet = set.numReps * set.weight;
+          return set.update(req.body);
+        })
+        .then(() => Exercise.findAll({ where: { id: req.params.exerciseId }, include: [User] }))
+        .then((exercises) => {
+          const exercise = exercises[0];
+          if (!exercise) {
+            throw new NotFoundError('Exercise not found');
+          }
+
+          const user = exercise.User;
+          const newWeightOfSet = req.body.numReps * req.body.weight;
+
+          // update total weight lifted by user
+          return user.update({
+            totalWeightLifted: user.totalWeightLifted + (newWeightOfSet - oldWeightOfSet),
+          });
         });
-      })
+    })
       .then(() => res.sendStatus(204))
       .catch(next);
   }
@@ -485,31 +455,26 @@ router.patch('/:exerciseId/sets/:setId', (req, res, next) => {
  * @apiSuccess {String} body.updatedAt Date of last update.
  */
 router.get('/:id/comments', (req, res, next) => {
-  let commentsOfExercise;
-
-  Exercise.find({ where: { id: req.params.id } })
-    .then((exercise) => {
+  Exercise.findAll({
+    where: { id: req.params.id },
+    include: [{ model: Comment, include: [User] }],
+  })
+    .then((exercises) => {
+      const exercise = exercises[0];
       if (!exercise) {
         throw new NotFoundError('Exercise not found');
       }
 
-      return exercise.getComments();
-    })
-    .then((comments) => {
-      commentsOfExercise = comments;
-      // get user of each comment
-      return Promise.all(comments.map(comment => comment.getUser()));
-    })
-    .then(users => (
-      Promise.all(commentsOfExercise.map((comment, index) => ({
+      const comments = exercise.Comments;
+
+      res.json(comments.map(comment => ({
         id: comment.id,
         text: comment.text,
         createdAt: comment.createdAt,
         updatedAt: comment.updatedAt,
-        user: users[index],
-      })))
-    ))
-    .then(result => res.json(result))
+        user: comment.User,
+      })));
+    })
     .catch(next);
 });
 
@@ -531,16 +496,15 @@ router.post('/:id/comments', (req, res, next) => {
     next(new InvalidRequestBodyError());
   } else {
     let exercise;
-    let comment;
 
-    Exercise.find({ where: { id: req.params.id } })
-      .then((exer) => {
-        if (!exer) {
+    Exercise.findById(req.params.id)
+      .then((foundExercise) => {
+        if (!foundExercise) {
           throw new NotFoundError('Exercise not found');
         }
 
-        exercise = exer;
-        return User.find({ where: { id: req.body.userId } });
+        exercise = foundExercise;
+        return User.findById(req.body.userId);
       })
       .then((user) => {
         if (!user) {
@@ -549,11 +513,10 @@ router.post('/:id/comments', (req, res, next) => {
 
         return Comment.create({ text: req.body.text });
       })
-      .then((newComment) => {
-        comment = newComment;
-        return comment.setExercise(exercise);
-      })
-      .then(() => comment.setUser(req.body.userId))
+      .then(comment => Promise.all([
+        exercise.addComment(comment),
+        comment.setUser(req.body.userId),
+      ]))
       .then(() => res.sendStatus(204))
       .catch(next);
   }
@@ -574,15 +537,14 @@ router.patch('/:exerciseId/comments/:commentId', (req, res, next) => {
   if (error) {
     next(new InvalidRequestBodyError());
   } else {
-    Comment.find({ where: { id: req.params.commentId } })
-      .then((comment) => {
-        if (!comment) {
+    Comment.update({ text: req.body.text }, { where: { id: req.params.commentId } })
+      .spread((numUpdatedComments) => {
+        if (numUpdatedComments === 0) {
           throw new NotFoundError('Comment not found');
         }
 
-        return comment.update({ text: req.body.text });
+        res.sendStatus(204);
       })
-      .then(() => res.sendStatus(204))
       .catch(next);
   }
 });
@@ -593,15 +555,14 @@ router.patch('/:exerciseId/comments/:commentId', (req, res, next) => {
  * @apiGroup Exercise
  */
 router.delete('/:exerciseId/comments/:commentId', (req, res, next) => (
-  Comment.find({ where: { id: req.params.commentId } })
-    .then((comment) => {
-      if (!comment) {
+  Comment.destroy({ where: { id: req.params.commentId } })
+    .then((numDeletedComments) => {
+      if (numDeletedComments === 0) {
         throw new NotFoundError('Comment not found');
       }
 
-      return comment.destroy();
+      res.sendStatus(204);
     })
-    .then(() => res.sendStatus(204))
     .catch(next)
 ));
 

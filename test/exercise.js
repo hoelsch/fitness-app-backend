@@ -78,6 +78,7 @@ describe('Exercise', () => {
             res.body[0].should.have.property('note');
             res.body[0].note.should.equal(result.exercise.note);
             res.body[0].should.have.property('createdAt');
+            res.body[0].should.have.property('updatedAt');
 
             res.body[0].should.have.property('sets');
             res.body[0].sets.should.be.a('array');
@@ -125,6 +126,7 @@ describe('Exercise', () => {
             res.body.should.have.property('note');
             res.body.note.should.equal(result.exercise.note);
             res.body.should.have.property('createdAt');
+            res.body.should.have.property('updatedAt');
 
             res.body.should.have.property('sets');
             res.body.sets.should.be.a('array');
@@ -399,9 +401,6 @@ describe('Exercise', () => {
 
             res.body.should.have.property('weight');
             res.body.weight.should.equal(1);
-
-            res.body.should.have.property('ExerciseId');
-            res.body.ExerciseId.should.equal(result.exercise.id);
 
             result.exercise.getSets()
               .then((sets) => {

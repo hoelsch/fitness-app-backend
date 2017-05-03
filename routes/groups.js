@@ -4,6 +4,9 @@ const NotFoundError = require('../errors/not-found-error');
 const InvalidRequestBodyError = require('../errors/invalid-request-body-error');
 const Group = require('../models').Group;
 const User = require('../models').User;
+const Exercise = require('../models').Exercise;
+const ExerciseType = require('../models').ExerciseType;
+const Set = require('../models').Set;
 
 const router = express.Router();
 
@@ -18,9 +21,9 @@ const router = express.Router();
  * @apiSuccess {String} body.createdAt Date of creation.
  * @apiSuccess {String} body.updatedAt Date of last update.
  */
-router.get('/', (req, res) => (
-  Group.findAll().then(groups => res.json(groups))
-));
+router.get('/', (req, res) => {
+  Group.findAll().then(groups => res.json(groups));
+});
 
 /**
  * @api {get} /groups Get a single group
@@ -32,16 +35,16 @@ router.get('/', (req, res) => (
  * @apiSuccess {String} createdAt Date of creation.
  * @apiSuccess {String} updatedAt Date of last update.
  */
-router.get('/:id', (req, res, next) => (
-  Group.find({ where: { id: req.params.id } })
+router.get('/:id', (req, res, next) => {
+  Group.findById(req.params.id)
     .then((group) => {
-      if (group) {
-        res.json(group);
-      } else {
+      if (!group) {
         next(new NotFoundError('Group not found'));
+      } else {
+        res.json(group);
       }
-    })
-));
+    });
+});
 
 /**
  * @api {post} /groups Create a group
@@ -63,7 +66,7 @@ router.post('/', (req, res, next) => {
   if (error) {
     next(new InvalidRequestBodyError());
   } else {
-    Group.create({ name: req.body.name }).then(group => res.json(group));
+    Group.create(req.body).then(group => res.json(group));
   }
 });
 
@@ -87,10 +90,10 @@ router.patch('/:id', (req, res, next) => {
   if (error) {
     next(new InvalidRequestBodyError());
   } else {
-    Group.find({ where: { id: req.params.id } })
+    Group.findById(req.params.id)
       .then((group) => {
         if (!group) {
-          next(new NotFoundError('Group not found'));
+          throw new NotFoundError('Group not found');
         }
 
         return group.update(req.body);
@@ -106,15 +109,14 @@ router.patch('/:id', (req, res, next) => {
  * @apiGroup Group
  */
 router.delete('/:id', (req, res, next) => (
-  Group.find({ where: { id: req.params.id } })
-    .then((group) => {
-      if (!group) {
-        next(new NotFoundError('Group not found'));
+  Group.destroy({ where: { id: req.params.id } })
+    .then((numDeletedGroups) => {
+      if (numDeletedGroups === 0) {
+        throw new NotFoundError('Group not found');
       }
 
-      return group.destroy();
+      res.sendStatus(204);
     })
-    .then(() => res.sendStatus(204))
     .catch(next)
 ));
 
@@ -126,24 +128,20 @@ router.delete('/:id', (req, res, next) => (
  * @apiSuccess {Object[]} body List of members of a group.
  * @apiSuccess {Number} body.id ID of the user.
  * @apiSuccess {String} body.name Name of the user.
+ * @apiSuccess {Number} body.totalWeightLifted Total weight lifted by the user.
  * @apiSuccess {String} body.createdAt Date of creation.
  * @apiSuccess {String} body.updatedAt Date of last update.
  */
 router.get('/:id/members', (req, res, next) => (
-  Group.find({ where: { id: req.params.id } })
-    .then((group) => {
+  Group.findAll({ where: { id: req.params.id }, include: [User] })
+    .then((groups) => {
+      const group = groups[0];
       if (!group) {
-        next(new NotFoundError('Group not found'));
+        throw new NotFoundError('Group not found');
       }
 
-      return group.getUsers();
+      res.json(group.Users);
     })
-    .then(members => res.json(members.map(member => ({
-      id: member.id,
-      name: member.name,
-      createdAt: member.createdAt,
-      updatedAt: member.updatedAt,
-    }))))
     .catch(next)
 ));
 
@@ -162,10 +160,10 @@ router.post('/:id/members', (req, res, next) => {
   if (error) {
     next(new InvalidRequestBodyError());
   } else {
-    Group.find({ where: { id: req.params.id } })
+    Group.findById(req.params.id)
       .then((group) => {
         if (!group) {
-          next(new NotFoundError('Group not found'));
+          throw new NotFoundError('Group not found');
         }
 
         return group.addUser(req.body.userId);
@@ -181,20 +179,19 @@ router.post('/:id/members', (req, res, next) => {
  * @apiGroup Group
  */
 router.delete('/:groupId/members/:userId', (req, res, next) => {
-  let group;
+  Promise.all([
+    Group.findById(req.params.groupId),
+    User.findById(req.params.userId),
+  ])
+    .then((result) => {
+      const group = result[0];
+      const user = result[1];
 
-  Group.find({ where: { id: req.params.groupId } })
-    .then((foundGroup) => {
-      if (!foundGroup) {
-        next(new NotFoundError('Group not found'));
+      if (!group) {
+        throw new NotFoundError('Group not found');
       }
-
-      group = foundGroup;
-      return User.find({ where: { id: req.params.userId } });
-    })
-    .then((user) => {
       if (!user) {
-        next(new NotFoundError('User not found'));
+        throw new NotFoundError('User not found');
       }
 
       return group.removeUser(req.params.userId);
@@ -218,60 +215,40 @@ router.delete('/:groupId/members/:userId', (req, res, next) => {
  * @apiSuccess {String} body.updatedAt Date of last update.
  */
 router.get('/:id/exercises', (req, res, next) => {
-  const exercises = [];
-  let exerciseTypes;
-  let users;
-  let sets;
-
-  Group.find({ where: { id: req.params.id } })
-    .then((group) => {
+  Group.findAll({
+    where: { id: req.params.id },
+    include: [{
+      model: User,
+      include: [{
+        model: Exercise,
+        include: [Set, ExerciseType, User],
+      }],
+    }],
+  })
+    .then((groups) => {
+      const group = groups[0];
       if (!group) {
-        next(new NotFoundError('Group not found'));
+        throw new NotFoundError('Group not found');
       }
 
-      return group.getUsers();
-    })
-    .then((usersOfGroup) => {
-      users = usersOfGroup;
-      if (users.length === 0) {
-        res.json([]);
-      }
+      // array in which each entry is another array containing the exercises of an user
+      const exercisesOfUsers = group.Users.map(user => user.Exercises);
+      // flatten exercisesOfUsers array --> result is an array with all exercises of the group
+      const exercises = [].concat(...exercisesOfUsers);
 
-      // get exercises of each user of the group
-      return Promise.all(users.map(user => user.getExercises()));
-    })
-    .then((exercisesOfUsers) => {
-      exercisesOfUsers.forEach((exercisesOfUser, userIndex) => {
-        exercisesOfUser.forEach((exercise) => {
-          const exerciseExtendedWithUser = exercise;
-          exerciseExtendedWithUser.user = users[userIndex];
-          exercises.push(exerciseExtendedWithUser);
-        });
-      });
-
-      // get sets of all exercises of each user of the group
-      return Promise.all(exercises.map(exercise => exercise.getSets()));
-    })
-    .then((setsOfExercises) => {
-      sets = setsOfExercises;
-      // types of the exercises of each user of the group
-      return Promise.all(exercises.map(exercise => exercise.getExerciseType()));
-    })
-    .then((typesOfExercises) => {
-      exerciseTypes = typesOfExercises;
-      // create result object that will be sent to the client
-      return Promise.all(exercises.map((exercise, index) => ({
+      res.json(exercises.map(exercise => ({
         id: exercise.id,
         note: exercise.note,
         createdAt: exercise.createdAt,
         updatedAt: exercise.updatedAt,
-        user: exercise.user,
-        sets: sets[index],
-        exerciseType: exerciseTypes[index],
+        user: exercise.User,
+        exerciseType: exercise.ExerciseType,
+        sets: exercise.Sets,
       })));
     })
-    .then(result => res.json(result))
-    .catch(next);
+    .catch((err) => {
+      next(err);
+    });
 });
 
 module.exports = router;

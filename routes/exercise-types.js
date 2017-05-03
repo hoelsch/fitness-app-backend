@@ -17,9 +17,9 @@ const router = express.Router();
  * @apiSuccess {String} body.createdAt Date of creation.
  * @apiSuccess {String} body.updatedAt Date of last update.
  */
-router.get('/', (req, res) => (
-  ExerciseType.findAll().then(exerciseTypes => res.json(exerciseTypes))
-));
+router.get('/', (req, res) => {
+  ExerciseType.findAll().then(exerciseTypes => res.json(exerciseTypes));
+});
 
 /**
  * @api {get} /exercise-types/:id Get a single exercise type
@@ -31,7 +31,7 @@ router.get('/', (req, res) => (
  * @apiSuccess {String} createdAt Date of creation.
  * @apiSuccess {String} updatedAt Date of last update.
  */
-router.get('/:id', (req, res, next) => (
+router.get('/:id', (req, res, next) => {
   ExerciseType.findById(req.params.id)
     .then((exerciseType) => {
       if (!exerciseType) {
@@ -39,8 +39,8 @@ router.get('/:id', (req, res, next) => (
       } else {
         res.json(exerciseType);
       }
-    })
-));
+    });
+});
 
 /**
  * @api {post} /exercise-types Create an exercise type
@@ -105,7 +105,7 @@ router.patch('/:id', (req, res, next) => {
  * @apiName DeleteExerciseType
  * @apiGroup ExerciseType
  */
-router.delete('/:id', (req, res, next) => (
+router.delete('/:id', (req, res, next) => {
   ExerciseType.destroy({ where: { id: req.params.id } })
     .then((numDeletedRows) => {
       if (numDeletedRows === 0) {
@@ -114,7 +114,7 @@ router.delete('/:id', (req, res, next) => (
 
       res.sendStatus(204);
     })
-    .catch(next)
-));
+    .catch(next);
+});
 
 module.exports = router;

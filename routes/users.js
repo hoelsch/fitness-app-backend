@@ -3,6 +3,10 @@ const Joi = require('joi');
 const NotFoundError = require('../errors/not-found-error');
 const InvalidRequestBodyError = require('../errors/invalid-request-body-error');
 const User = require('../models').User;
+const Group = require('../models').Group;
+const Exercise = require('../models').Exercise;
+const ExerciseType = require('../models').ExerciseType;
+const Set = require('../models').Set;
 
 const router = express.Router();
 
@@ -16,16 +20,16 @@ const router = express.Router();
  * @apiSuccess {String} createdAt Date of creation.
  * @apiSuccess {String} updatedAt Date of last update.
  */
-router.get('/:id', (req, res, next) => (
-  User.find({ where: { id: req.params.id } })
+router.get('/:id', (req, res, next) => {
+  User.findById(req.params.id)
     .then((user) => {
-      if (user) {
-        res.json(user);
-      } else {
+      if (!user) {
         next(new NotFoundError('User not found'));
+      } else {
+        res.json(user);
       }
-    })
-));
+    });
+});
 
 /**
  * @api {post} /users Create an user
@@ -71,10 +75,10 @@ router.patch('/:id', (req, res, next) => {
   if (error) {
     next(new InvalidRequestBodyError());
   } else {
-    User.find({ where: { id: req.params.id } })
+    User.findById(req.params.id)
       .then((user) => {
         if (!user) {
-          next(new NotFoundError('User not found'));
+          throw new NotFoundError('User not found');
         }
 
         return user.update(req.body);
@@ -89,18 +93,17 @@ router.patch('/:id', (req, res, next) => {
  * @apiName DeleteUser
  * @apiGroup User
  */
-router.delete('/:id', (req, res, next) => (
-  User.find({ where: { id: req.params.id } })
-    .then((user) => {
-      if (!user) {
-        next(new NotFoundError('User not found'));
+router.delete('/:id', (req, res, next) => {
+  User.destroy({ where: { id: req.params.id } })
+    .then((numDeletedUsers) => {
+      if (numDeletedUsers === 0) {
+        throw new NotFoundError('User not found');
       }
 
-      return user.destroy();
+      res.sendStatus(204);
     })
-    .then(() => res.sendStatus(204))
-    .catch(next)
-));
+    .catch(next);
+});
 
 /**
  * @api {get} /users/:id/groups List groups of user
@@ -113,23 +116,23 @@ router.delete('/:id', (req, res, next) => (
  * @apiSuccess {String} body.createdAt Date of creation.
  * @apiSuccess {String} body.updatedAt Date of last update.
  */
-router.get('/:id/groups', (req, res, next) => (
-  User.find({ where: { id: req.params.id } })
-    .then((user) => {
+router.get('/:id/groups', (req, res, next) => {
+  User.findAll({ where: { id: req.params.id }, include: [Group] })
+    .then((users) => {
+      const user = users[0];
       if (!user) {
         next(new NotFoundError('User not found'));
       }
 
-      return user.getGroups();
+      res.json(user.Groups.map(group => ({
+        id: group.id,
+        name: group.name,
+        createdAt: group.createdAt,
+        updatedAt: group.updatedAt,
+      })));
     })
-    .then(groups => res.json(groups.map(group => ({
-      id: group.id,
-      name: group.name,
-      createdAt: group.createdAt,
-      updatedAt: group.updatedAt,
-    }))))
-    .catch(next)
-));
+    .catch(next);
+});
 
 /**
  * @api {get} /users/:id/exercises List exercises of user
@@ -146,39 +149,29 @@ router.get('/:id/groups', (req, res, next) => (
  * @apiSuccess {String} body.updatedAt Date of last update.
  */
 router.get('/:id/exercises', (req, res, next) => {
-  let user;
-  let exercises;
-  let sets;
-
-  User.find({ where: { id: req.params.id } })
-    .then((foundUser) => {
-      if (!foundUser) {
-        next(new NotFoundError('User not found'));
+  User.findAll({
+    where: { id: req.params.id },
+    include: [{
+      model: Exercise,
+      include: [Set, ExerciseType, User],
+    }],
+  })
+    .then((users) => {
+      const user = users[0];
+      if (!user) {
+        throw new NotFoundError('User not found');
       }
 
-      user = foundUser;
-      return user.getExercises();
+      res.json(user.Exercises.map(exercise => ({
+        id: exercise.id,
+        note: exercise.note,
+        createdAt: exercise.createdAt,
+        updatedAt: exercise.updatedAt,
+        user: exercise.User,
+        sets: exercise.Sets,
+        exerciseType: exercise.ExerciseType,
+      })));
     })
-    .then((exercisesOfUser) => {
-      exercises = exercisesOfUser;
-      // get sets of each exercise
-      return Promise.all(exercises.map(exercise => exercise.getSets()));
-    })
-    .then((setsOfExercises) => {
-      sets = setsOfExercises;
-      // get types of each exercise
-      return Promise.all(exercises.map(exercise => exercise.getExerciseType()));
-    })
-    .then(exerciseTypes => Promise.all(exercises.map((exercise, index) => ({
-      user,
-      id: exercise.id,
-      note: exercise.note,
-      createdAt: exercise.createdAt,
-      updatedAt: exercise.updatedAt,
-      sets: sets[index],
-      exerciseType: exerciseTypes[index],
-    }))))
-    .then(result => res.json(result))
     .catch(next);
 });
 
@@ -190,10 +183,10 @@ router.get('/:id/exercises', (req, res, next) => {
  * @apiSuccess {Number} totalWeightLifted Total weight lifted by an user (in tons).
  */
 router.get('/:id/statistics', (req, res, next) => (
-  User.find({ where: { id: req.params.id } })
+  User.findById(req.params.id)
     .then((user) => {
       if (!user) {
-        next(new NotFoundError('User not found'));
+        throw new NotFoundError('User not found');
       }
 
       res.json({ totalWeightLifted: user.totalWeightLifted });

@@ -253,6 +253,7 @@ describe('Group', () => {
             res.body[0].should.have.property('name');
             res.body[0].name.should.equal(result.user.name);
 
+            res.body[0].should.have.property('totalWeightLifted');
             res.body[0].should.have.property('createdAt');
             res.body[0].should.have.property('updatedAt');
 

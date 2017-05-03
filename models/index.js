@@ -2,6 +2,10 @@ const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
 const config = require('../config/config.json')[process.env.NODE_ENV || 'development'];
+const cls = require('continuation-local-storage');
+
+const namespace = cls.createNamespace('sequelize-namespace');
+Sequelize.cls = namespace;
 
 const basename = path.basename(module.filename);
 const db = {};
