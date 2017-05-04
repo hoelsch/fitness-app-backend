@@ -18,7 +18,7 @@ const router = express.Router();
  * @apiSuccess {String} body.updatedAt Date of last update.
  */
 router.get('/', (req, res) => {
-  ExerciseType.findAll().then(exerciseTypes => res.json(exerciseTypes));
+  ExerciseType.findAll({ raw: true }).then(exerciseTypes => res.json(exerciseTypes));
 });
 
 /**
@@ -37,7 +37,7 @@ router.get('/:id', (req, res, next) => {
       if (!exerciseType) {
         next(new NotFoundError('Exercise type not found'));
       } else {
-        res.json(exerciseType);
+        res.json(exerciseType.toJSON());
       }
     });
 });
@@ -63,7 +63,7 @@ router.post('/', (req, res, next) => {
     next(new InvalidRequestBodyError());
   } else {
     ExerciseType.create({ name: req.body.name })
-      .then(exerciseType => res.json(exerciseType));
+      .then(exerciseType => res.json(exerciseType.toJSON()));
   }
 });
 
@@ -95,7 +95,7 @@ router.patch('/:id', (req, res, next) => {
 
         return exerciseType.update(req.body);
       })
-      .then(updatedExerciseType => res.json(updatedExerciseType))
+      .then(updatedExerciseType => res.json(updatedExerciseType.toJSON()))
       .catch(next);
   }
 });
