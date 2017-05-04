@@ -1,9 +1,10 @@
 const chai = require('chai');
 const chaiHttp = require('chai-http');
 const server = require('../bin/www');
-const should = chai.should();
 const ExerciseType = require('../models').ExerciseType;
 const MockData = require('./mock-data');
+
+const should = chai.should();
 
 chai.use(chaiHttp);
 
