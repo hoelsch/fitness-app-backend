@@ -46,15 +46,12 @@ function createUser() {
 }
 
 describe('User', () => {
-  after(function (done) {
-    Group.destroy({ where: {} })
+  afterEach(function (done) {
+    User.destroy({ where: {} })
+      .then(() => Group.destroy({ where: {} }))
       .then(() => Exercise.destroy({ where: {} }))
       .then(() => ExerciseType.destroy({ where: {} }))
       .then(() => done());
-  });
-
-  afterEach(function (done) {
-    User.destroy({ where: {} }).then(() => done());
   });
 
   describe('GET /users/:id', () => {
@@ -276,8 +273,6 @@ describe('User', () => {
 
             res.body[0].should.have.property('exerciseType');
             res.body[0].exerciseType.should.be.a('object');
-            res.body[0].exerciseType.should.have.property('id');
-            res.body[0].exerciseType.id.should.equal(result.exerciseType.id);
             res.body[0].exerciseType.should.have.property('name');
             res.body[0].exerciseType.name.should.equal(result.exerciseType.name);
 

@@ -12,34 +12,35 @@ const router = express.Router();
  * @apiGroup ExerciseType
  *
  * @apiSuccess {Object[]} body List of exercise types.
- * @apiSuccess {Number} body.id ID of the exercise type.
- * @apiSuccess {String} body.name Name of the exercise.
+ * @apiSuccess {String} body.name Unique name of the exercise.
  * @apiSuccess {String} body.createdAt Date of creation.
  * @apiSuccess {String} body.updatedAt Date of last update.
  */
-router.get('/', (req, res) => {
-  ExerciseType.findAll({ raw: true }).then(exerciseTypes => res.json(exerciseTypes));
+router.get('/', (req, res, next) => {
+  ExerciseType.findAll({ raw: true })
+    .then(exerciseTypes => res.json(exerciseTypes))
+    .catch(next);
 });
 
 /**
- * @api {get} /exercise-types/:id Get a single exercise type
+ * @api {get} /exercise-types/:name Get a single exercise type
  * @apiName GetExerciseType
  * @apiGroup ExerciseType
  *
- * @apiSuccess {Number} id ID of the exercise type.
- * @apiSuccess {String} name Name of the exercise.
+ * @apiSuccess {String} name Unique name of the exercise.
  * @apiSuccess {String} createdAt Date of creation.
  * @apiSuccess {String} updatedAt Date of last update.
  */
-router.get('/:id', (req, res, next) => {
-  ExerciseType.findById(req.params.id)
+router.get('/:name', (req, res, next) => {
+  ExerciseType.findById(req.params.name)
     .then((exerciseType) => {
       if (!exerciseType) {
-        next(new NotFoundError('Exercise type not found'));
-      } else {
-        res.json(exerciseType.toJSON());
+        throw new NotFoundError('Exercise type not found');
       }
-    });
+
+      res.json(exerciseType.toJSON());
+    })
+    .catch(next);
 });
 
 /**
@@ -47,10 +48,9 @@ router.get('/:id', (req, res, next) => {
  * @apiName PostExerciseType
  * @apiGroup ExerciseType
  *
- * @apiParam {String} name Name of the exercise.
+ * @apiParam {String} name Unique name of the exercise.
  *
- * @apiSuccess {Number} id ID of the exercise type.
- * @apiSuccess {String} name Name of the exercise.
+ * @apiSuccess {String} name Unique name of the exercise.
  * @apiSuccess {String} createdAt Date of creation.
  * @apiSuccess {String} updatedAt Date of last update.
  */
@@ -62,51 +62,19 @@ router.post('/', (req, res, next) => {
   if (error) {
     next(new InvalidRequestBodyError());
   } else {
-    ExerciseType.create({ name: req.body.name })
-      .then(exerciseType => res.json(exerciseType.toJSON()));
-  }
-});
-
-/**
- * @api {patch} /exercise-types/:id Edit an exercise type
- * @apiName PatchExerciseType
- * @apiGroup ExerciseType
- *
- * @apiParam {String} name Name of the exercise.
- *
- * @apiSuccess {Number} id ID of the exercise type.
- * @apiSuccess {String} name Name of the exercise.
- * @apiSuccess {String} createdAt Date of creation.
- * @apiSuccess {String} updatedAt Date of last update.
- */
-router.patch('/:id', (req, res, next) => {
-  const { error } = Joi.validate(req.body, {
-    name: Joi.string().min(1).required(),
-  });
-
-  if (error) {
-    next(new InvalidRequestBodyError());
-  } else {
-    ExerciseType.findById(req.params.id)
-      .then((exerciseType) => {
-        if (!exerciseType) {
-          throw new NotFoundError('Exercise type not found');
-        }
-
-        return exerciseType.update(req.body);
-      })
-      .then(updatedExerciseType => res.json(updatedExerciseType.toJSON()))
+    ExerciseType.findOrCreate({ where: { name: req.body.name } })
+      .spread(exerciseType => res.json(exerciseType.toJSON()))
       .catch(next);
   }
 });
 
 /**
- * @api {delete} /exercise-types/:id Delete an exercise type
+ * @api {delete} /exercise-types/:name Delete an exercise type
  * @apiName DeleteExerciseType
  * @apiGroup ExerciseType
  */
-router.delete('/:id', (req, res, next) => {
-  ExerciseType.destroy({ where: { id: req.params.id } })
+router.delete('/:name', (req, res, next) => {
+  ExerciseType.destroy({ where: { name: req.params.name } })
     .then((numDeletedRows) => {
       if (numDeletedRows === 0) {
         throw new NotFoundError('Exercise type not found');

@@ -46,16 +46,13 @@ function createGroup() {
 }
 
 describe('Group', () => {
-  after(function (done) {
-    User.destroy({ where: {} })
+  afterEach(function (done) {
+    Group.destroy({ where: {} })
+      .then(() => User.destroy({ where: {} }))
       .then(() => Exercise.destroy({ where: {} }))
       .then(() => ExerciseType.destroy({ where: {} }))
       .then(() => Set.destroy({ where: {} }))
       .then(() => done());
-  });
-
-  afterEach(function (done) {
-    Group.destroy({ where: {} }).then(() => done());
   });
 
   describe('GET /groups', () => {
@@ -396,8 +393,6 @@ describe('Group', () => {
 
             res.body[0].should.have.property('exerciseType');
             res.body[0].exerciseType.should.be.a('object');
-            res.body[0].exerciseType.should.have.property('id');
-            res.body[0].exerciseType.id.should.equal(result.exerciseType.id);
             res.body[0].exerciseType.should.have.property('name');
             res.body[0].exerciseType.name.should.equal(result.exerciseType.name);
 

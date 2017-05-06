@@ -1,6 +1,9 @@
 module.exports = (sequelize, DataTypes) => {
   const ExerciseType = sequelize.define('ExerciseType', {
-    name: DataTypes.STRING,
+    name: {
+      type: DataTypes.STRING,
+      primaryKey: true,
+    },
   }, {
     classMethods: {
       associate: (models) => {
