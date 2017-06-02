@@ -1,63 +1,25 @@
+/* eslint no-undef: 0 */
+/* eslint func-names: 0 */
+/* eslint prefer-arrow-callback: 0 */
+/* eslint no-unused-expressions: 0 */
+
 const chai = require('chai');
 const chaiHttp = require('chai-http');
 const server = require('../bin/www');
-const should = chai.should();
 const Group = require('../models').Group;
-const User = require('../models').User;
-const Exercise = require('../models').Exercise;
-const ExerciseType = require('../models').ExerciseType;
-const Set = require('../models').Set;
-const MockData = require('./mock-data');
+const GroupMock = require('./mock-data/mock-data').GroupMock;
 
 chai.use(chaiHttp);
 
-/**
- * Creates and stores a group in db.
- */
-function createGroup() {
-  return new Promise((resolve) => {
-    let group;
-    let user;
-    let set;
-    let exercise;
-    let exerciseType;
-
-    Promise.all([
-      Group.create(MockData.group),
-      User.create(MockData.user),
-      Exercise.create(MockData.exercise),
-      ExerciseType.create(MockData.exerciseType),
-      Set.create(MockData.set),
-    ])
-      .then((values) => {
-        group = values[0];
-        user = values[1];
-        exercise = values[2];
-        exerciseType = values[3];
-        set = values[4];
-
-        return group.addUser(user);
-      })
-      .then(() => exercise.setUser(user))
-      .then(() => exercise.setExerciseType(exerciseType))
-      .then(() => set.setExercise(exercise))
-      .then(() => resolve({ group, user, exercise, exerciseType, sets: [set] }));
-  });
-}
-
 describe('Group', () => {
   afterEach(function (done) {
-    Group.destroy({ where: {} })
-      .then(() => User.destroy({ where: {} }))
-      .then(() => Exercise.destroy({ where: {} }))
-      .then(() => ExerciseType.destroy({ where: {} }))
-      .then(() => Set.destroy({ where: {} }))
+    GroupMock.deletePersistentInstances()
       .then(() => done());
   });
 
   describe('GET /groups', () => {
     it('should list groups', function (done) {
-      createGroup().then((result) => {
+      GroupMock.createPersistentInstance().then((result) => {
         chai.request(server)
           .get('/groups')
           .end((err, res) => {
@@ -94,7 +56,7 @@ describe('Group', () => {
 
   describe('GET /groups/:id', () => {
     it('should get a single group', function (done) {
-      createGroup().then((result) => {
+      GroupMock.createPersistentInstance().then((result) => {
         chai.request(server)
           .get(`/groups/${result.group.id}`)
           .end((err, res) => {
@@ -128,9 +90,10 @@ describe('Group', () => {
 
   describe('POST /groups', () => {
     it('should create a group', function (done) {
+      const group = GroupMock.getMockData();
       chai.request(server)
         .post('/groups')
-        .send(MockData.group)
+        .send(group)
         .end((err, res) => {
           res.should.have.status(200);
           res.should.be.json;
@@ -139,7 +102,7 @@ describe('Group', () => {
           res.body.should.have.property('id');
 
           res.body.should.have.property('name');
-          res.body.name.should.equal(MockData.group.name);
+          res.body.name.should.equal(group.name);
 
           res.body.should.have.property('createdAt');
           res.body.should.have.property('updatedAt');
@@ -161,7 +124,7 @@ describe('Group', () => {
 
   describe('PATCH /groups/:id', () => {
     it('should edit a group', function (done) {
-      createGroup().then((result) => {
+      GroupMock.createPersistentInstance().then((result) => {
         chai.request(server)
           .patch(`/groups/${result.group.id}`)
           .send({ name: 'Updated' })
@@ -184,19 +147,17 @@ describe('Group', () => {
       });
     });
     it('should return status code 404 for non-existing group', function (done) {
-      createGroup().then((result) => {
-        chai.request(server)
-          .patch('/groups/-1')
-          .send({ name: 'Updated' })
-          .end((err, res) => {
-            res.should.have.status(404);
+      chai.request(server)
+        .patch('/groups/-1')
+        .send({ name: 'Updated' })
+        .end((err, res) => {
+          res.should.have.status(404);
 
-            done();
-          });
-      });
+          done();
+        });
     });
     it('should return status code 400 for invalid input data', function (done) {
-      createGroup().then((result) => {
+      GroupMock.createPersistentInstance().then((result) => {
         chai.request(server)
           .patch(`/groups/${result.group.id}`)
           .send({})
@@ -211,7 +172,7 @@ describe('Group', () => {
 
   describe('DELETE /groups/:id', () => {
     it('should delete a group', function (done) {
-      createGroup().then((result) => {
+      GroupMock.createPersistentInstance().then((result) => {
         chai.request(server)
           .delete(`/groups/${result.group.id}`)
           .end((err, res) => {
@@ -234,7 +195,7 @@ describe('Group', () => {
 
   describe('GET /groups/:id/members', () => {
     it('should list members of a group', function (done) {
-      createGroup().then((result) => {
+      GroupMock.createPersistentInstance().then((result) => {
         chai.request(server)
           .get(`/groups/${result.group.id}/members`)
           .end((err, res) => {
@@ -259,7 +220,7 @@ describe('Group', () => {
       });
     });
     it('should return empty array when a group has no members', function (done) {
-      Group.create(MockData.group).then((group) => {
+      Group.create(GroupMock.getMockData()).then((group) => {
         chai.request(server)
           .get(`/groups/${group.id}/members`)
           .end((err, res) => {
@@ -285,7 +246,7 @@ describe('Group', () => {
 
   describe('POST /groups/:id/members', () => {
     it('should add an user to a group', function (done) {
-      createGroup().then((result) => {
+      GroupMock.createPersistentInstance().then((result) => {
         chai.request(server)
           .post(`/groups/${result.group.id}/members`)
           .send({ userId: result.user.id })
@@ -297,7 +258,7 @@ describe('Group', () => {
       });
     });
     it('should return status code 404 for non-existing group', function (done) {
-      createGroup().then((result) => {
+      GroupMock.createPersistentInstance().then((result) => {
         chai.request(server)
           .post('/groups/-1/members')
           .send({ userId: result.user.id })
@@ -309,7 +270,7 @@ describe('Group', () => {
       });
     });
     it('should return status code 400 for invalid input data', function (done) {
-      createGroup().then((result) => {
+      GroupMock.createPersistentInstance().then((result) => {
         chai.request(server)
           .post(`/groups/${result.group.id}/members`)
           .send({})
@@ -324,7 +285,7 @@ describe('Group', () => {
 
   describe('DELETE /groups/:group-id/members/:user-id', () => {
     it('should delete an user of a group', function (done) {
-      createGroup().then((result) => {
+      GroupMock.createPersistentInstance().then((result) => {
         chai.request(server)
           .delete(`/groups/${result.group.id}/members/${result.user.id}`)
           .end((err, res) => {
@@ -335,7 +296,7 @@ describe('Group', () => {
       });
     });
     it('should return status code 404 for non-existing group', function (done) {
-      createGroup().then((result) => {
+      GroupMock.createPersistentInstance().then((result) => {
         chai.request(server)
           .delete(`/groups/-1/members/${result.user.id}`)
           .end((err, res) => {
@@ -346,7 +307,7 @@ describe('Group', () => {
       });
     });
     it('should return status code 404 for non-existing user', function (done) {
-      createGroup().then((result) => {
+      GroupMock.createPersistentInstance().then((result) => {
         chai.request(server)
           .delete(`/groups/${result.group.id}/members/-1`)
           .end((err, res) => {
@@ -360,7 +321,7 @@ describe('Group', () => {
 
   describe('GET /groups/:id/exercises', () => {
     it('should list exercises of a group', function (done) {
-      createGroup().then((result) => {
+      GroupMock.createPersistentInstance().then((result) => {
         chai.request(server)
           .get(`/groups/${result.group.id}/exercises`)
           .end((err, res) => {
@@ -404,7 +365,7 @@ describe('Group', () => {
       });
     });
     it('should list exercises of a group', function (done) {
-      Group.create(MockData.group).then((group) => {
+      Group.create(GroupMock.getMockData()).then((group) => {
         chai.request(server)
           .get(`/groups/${group.id}/exercises`)
           .end((err, res) => {

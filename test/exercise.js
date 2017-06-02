@@ -7,69 +7,26 @@ const chai = require('chai');
 const chaiHttp = require('chai-http');
 const server = require('../bin/www');
 const Exercise = require('../models').Exercise;
-const ExerciseType = require('../models').ExerciseType;
 const Set = require('../models').Set;
 const User = require('../models').User;
-const Comment = require('../models').Comment;
-const MockData = require('./mock-data');
+const ExerciseMock = require('./mock-data/mock-data').ExerciseMock;
+const ExerciseTypeMock = require('./mock-data/mock-data').ExerciseTypeMock;
+const UserMock = require('./mock-data/mock-data').UserMock;
+const set = require('./mock-data/mock-data').set;
 
 const should = chai.should();
 chai.use(chaiHttp);
 
-/**
- * Creates and stores a new exercise in the test db.
- */
-function createExercise() {
-  return new Promise((resolve, reject) => {
-    let exercise;
-    let exerciseType;
-    let set;
-    let user;
-    let comment;
-
-    Promise.all([
-      Exercise.create(MockData.exercise),
-      ExerciseType.create(MockData.exerciseType),
-      Set.create(MockData.set),
-      User.create(Object.assign({}, MockData.user, {
-        totalWeightLifted: MockData.set.numReps * MockData.set.weight,
-      })),
-      Comment.create(MockData.comment),
-    ])
-      .then((values) => {
-        exercise = values[0];
-        exerciseType = values[1];
-        set = values[2];
-        user = values[3];
-        comment = values[4];
-
-        return exercise.setExerciseType(exerciseType);
-      })
-      .then(() => set.setExercise(exercise))
-      .then(() => exercise.setUser(user))
-      .then(() => comment.setUser(user))
-      .then(() => comment.setExercise(exercise))
-      .then(() => {
-        resolve({ exercise, exerciseType, set, user, comment });
-      })
-      .catch(reject);
-  });
-}
-
 describe('Exercise', () => {
   afterEach(function (done) {
-    Exercise.destroy({ where: {} })
-      .then(() => ExerciseType.destroy({ where: {} }))
-      .then(() => Set.destroy({ where: {} }))
-      .then(() => User.destroy({ where: {} }))
-      .then(() => Comment.destroy({ where: {} }))
+    ExerciseMock.deletePersistentInstances()
       .then(() => done())
       .catch(done);
   });
 
   describe('GET /exercises', () => {
     it('should list exercises', function (done) {
-      createExercise()
+      ExerciseMock.createPersistentInstance()
         .then((result) => {
           chai.request(server)
             .get('/exercises')
@@ -123,7 +80,7 @@ describe('Exercise', () => {
 
   describe('GET /exercises/:id', () => {
     it('should get a single exercise', function (done) {
-      createExercise()
+      ExerciseMock.createPersistentInstance()
         .then((result) => {
           chai.request(server)
             .get(`/exercises/${result.exercise.id}`)
@@ -172,14 +129,17 @@ describe('Exercise', () => {
 
   describe('POST /exercises', () => {
     it('should create an exercise', function (done) {
-      User.create(MockData.user)
+      const exercise = ExerciseMock.getMockData();
+      const exerciseType = ExerciseTypeMock.getMockData();
+
+      User.create(UserMock.getMockData())
         .then((user) => {
           chai.request(server)
             .post('/exercises')
             .send({
-              note: MockData.exercise.note,
-              exerciseTypeName: MockData.exerciseType.name,
-              sets: [MockData.set],
+              note: exercise.note,
+              exerciseTypeName: exerciseType.name,
+              sets: [set],
               userId: user.id,
             })
             .end((err, res) => {
@@ -191,7 +151,7 @@ describe('Exercise', () => {
 
               res.body.should.have.property('id');
               res.body.should.have.property('note');
-              res.body.note.should.equal(MockData.exercise.note);
+              res.body.note.should.equal(exercise.note);
               res.body.should.have.property('createdAt');
               res.body.should.have.property('updatedAt');
 
@@ -209,7 +169,7 @@ describe('Exercise', () => {
               // refresh user record and check if lifted weight is updated correctly
               user.reload().then((reloadedUser) => {
                 reloadedUser.totalWeightLifted.should.equal(
-                  MockData.set.numReps * MockData.set.weight);
+                  set.numReps * set.weight);
 
                 done();
               });
@@ -218,7 +178,7 @@ describe('Exercise', () => {
         .catch(done);
     });
     it('should return status code 400 for invalid input data', function (done) {
-      User.create(MockData.user).then(() => {
+      User.create(UserMock.getMockData()).then(() => {
         chai.request(server)
           .post('/exercises')
           .send({})
@@ -233,7 +193,7 @@ describe('Exercise', () => {
 
   describe('PATCH /exercises/:id', () => {
     it('should edit an exercise', function (done) {
-      createExercise()
+      ExerciseMock.createPersistentInstance()
         .then((result) => {
           chai.request(server)
             .patch(`/exercises/${result.exercise.id}`)
@@ -250,7 +210,7 @@ describe('Exercise', () => {
 
               res.should.have.status(204);
 
-              Exercise.find({ where: { id: result.exercise.id } })
+              ExerciseMock.findPersistentInstanceById(result.exercise.id)
                 .then((updatedExercise) => {
                   should.exist(updatedExercise);
                   updatedExercise.note.should.equal('Updated');
@@ -298,7 +258,7 @@ describe('Exercise', () => {
         });
     });
     it('should return status code 400 for invalid input data', function (done) {
-      createExercise().then((result) => {
+      ExerciseMock.createPersistentInstance().then((result) => {
         chai.request(server)
           .patch(`/exercises/${result.exercise.id}`)
           .send({ invalidAttribute: 'value' })
@@ -310,7 +270,7 @@ describe('Exercise', () => {
       });
     });
     it('should return status code 400 for empty request body', function (done) {
-      createExercise().then((result) => {
+      ExerciseMock.createPersistentInstance().then((result) => {
         chai.request(server)
           .patch(`/exercises/${result.exercise.id}`)
           .send({})
@@ -325,7 +285,7 @@ describe('Exercise', () => {
 
   describe('DELETE /exercises/:id', () => {
     it('should delete an exercise', function (done) {
-      createExercise()
+      ExerciseMock.createPersistentInstance()
         .then((result) => {
           chai.request(server)
             .delete(`/exercises/${result.exercise.id}`)
@@ -347,7 +307,7 @@ describe('Exercise', () => {
         .catch(done);
     });
     it('should return status code 404 for non-existing exercise', function (done) {
-      createExercise()
+      ExerciseMock.createPersistentInstance()
         .then(() => {
           chai.request(server)
             .delete('/exercises/-1')
@@ -363,7 +323,7 @@ describe('Exercise', () => {
 
   describe('GET /exercises/:id/sets', () => {
     it('should list sets of an exercise', function (done) {
-      createExercise()
+      ExerciseMock.createPersistentInstance()
         .then((result) => {
           chai.request(server)
             .get(`/exercises/${result.exercise.id}/sets`)
@@ -386,7 +346,7 @@ describe('Exercise', () => {
         .catch(done);
     });
     it('should return an empty array when an exercise has no sets', function (done) {
-      Exercise.create(MockData.exercise)
+      Exercise.create(ExerciseMock.getMockData())
         .then((exercise) => {
           chai.request(server)
             .get(`/exercises/${exercise.id}/sets`)
@@ -404,7 +364,7 @@ describe('Exercise', () => {
         .catch(done);
     });
     it('should return status code 404 for non-existing exercise', function (done) {
-      createExercise()
+      ExerciseMock.createPersistentInstance()
         .then(() => {
           chai.request(server)
             .get('/exercises/-1/sets')
@@ -420,7 +380,7 @@ describe('Exercise', () => {
 
   describe('POST /exercises/:id/sets', () => {
     it('should create a set for an exercise', function (done) {
-      createExercise()
+      ExerciseMock.createPersistentInstance()
         .then((result) => {
           chai.request(server)
             .post(`/exercises/${result.exercise.id}/sets`)
@@ -472,7 +432,7 @@ describe('Exercise', () => {
         });
     });
     it('should return status code 400 for invalid input data', function (done) {
-      createExercise()
+      ExerciseMock.createPersistentInstance()
         .then((result) => {
           chai.request(server)
             .post(`/exercises/${result.exercise.id}/sets`)
@@ -489,7 +449,7 @@ describe('Exercise', () => {
 
   describe('DELETE /exercises/:exercise-id/sets/:set-id', () => {
     it('should delete a set of an exercise', function (done) {
-      createExercise()
+      ExerciseMock.createPersistentInstance()
         .then((result) => {
           chai.request(server)
             .delete(`/exercises/${result.exercise.id}/sets/${result.set.id}`)
@@ -514,7 +474,7 @@ describe('Exercise', () => {
         .catch(done);
     });
     it('should return status code 404 for non-existing set', function (done) {
-      createExercise()
+      ExerciseMock.createPersistentInstance()
         .then((result) => {
           chai.request(server)
             .delete(`/exercises/${result.exercise.id}/sets/-1`)
@@ -527,7 +487,7 @@ describe('Exercise', () => {
         .catch(done);
     });
     it('should return status code 404 for non-existing exercise', function (done) {
-      createExercise()
+      ExerciseMock.createPersistentInstance()
         .then((result) => {
           chai.request(server)
             .delete(`/exercises/-1/sets/${result.set.id}`)
@@ -543,7 +503,7 @@ describe('Exercise', () => {
 
   describe('PATCH /exercises/:exercise-id/sets/:set-id', () => {
     it('should edit a set of an exercise', function (done) {
-      createExercise()
+      ExerciseMock.createPersistentInstance()
         .then((result) => {
           chai.request(server)
             .patch(`/exercises/${result.exercise.id}/sets/${result.set.id}`)
@@ -578,7 +538,7 @@ describe('Exercise', () => {
         .catch(done);
     });
     it('should return status code 404 for non-existing set', function (done) {
-      createExercise()
+      ExerciseMock.createPersistentInstance()
         .then((result) => {
           chai.request(server)
             .patch(`/exercises/${result.exercise.id}/sets/-1`)
@@ -592,7 +552,7 @@ describe('Exercise', () => {
         .catch(done);
     });
     it('should return status code 404 for non-existing exercise', function (done) {
-      createExercise()
+      ExerciseMock.createPersistentInstance()
         .then((result) => {
           chai.request(server)
             .patch(`/exercises/-1/sets/${result.set.id}`)
@@ -606,7 +566,7 @@ describe('Exercise', () => {
         .catch(done);
     });
     it('should return status code 400 for invalid input data', function (done) {
-      createExercise()
+      ExerciseMock.createPersistentInstance()
         .then((result) => {
           chai.request(server)
             .patch(`/exercises/${result.exercise.id}/sets/${result.set.id}`)
@@ -623,7 +583,7 @@ describe('Exercise', () => {
 
   describe('GET /exercises/:id/comments', () => {
     it('should list comments of an exercise', function (done) {
-      createExercise()
+      ExerciseMock.createPersistentInstance()
         .then((result) => {
           chai.request(server)
             .get(`/exercises/${result.exercise.id}/comments`)
@@ -655,7 +615,7 @@ describe('Exercise', () => {
         .catch(done);
     });
     it('should return empty array when an exercise has no comments', function (done) {
-      Exercise.create(MockData.exercise)
+      Exercise.create(ExerciseMock.getMockData())
         .then((exercise) => {
           chai.request(server)
             .get(`/exercises/${exercise.id}/comments`)
@@ -685,7 +645,7 @@ describe('Exercise', () => {
 
   describe('POST /exercises/:id/comments', () => {
     it('should create a comment for an exercise', function (done) {
-      createExercise()
+      ExerciseMock.createPersistentInstance()
         .then((result) => {
           chai.request(server)
             .post(`/exercises/${result.exercise.id}/comments`)
@@ -701,7 +661,7 @@ describe('Exercise', () => {
         .catch(done);
     });
     it('should return status code 404 for non-existing exercise', function (done) {
-      createExercise()
+      ExerciseMock.createPersistentInstance()
         .then((result) => {
           chai.request(server)
             .post('/exercises/-1/comments')
@@ -715,7 +675,7 @@ describe('Exercise', () => {
         .catch(done);
     });
     it('should return status code 404 for non-existing user', function (done) {
-      createExercise()
+      ExerciseMock.createPersistentInstance()
         .then((result) => {
           chai.request(server)
             .post(`/exercises/${result.exercise.id}/comments`)
@@ -729,7 +689,7 @@ describe('Exercise', () => {
         .catch(done);
     });
     it('should return status code 400 for invalid input data', function (done) {
-      createExercise()
+      ExerciseMock.createPersistentInstance()
         .then((result) => {
           chai.request(server)
             .post(`/exercises/${result.exercise.id}/comments`)
@@ -746,7 +706,7 @@ describe('Exercise', () => {
 
   describe('PATCH /exercises/:exercise-id/comments/:comment-id', () => {
     it('should edit a comment of an exercise', function (done) {
-      createExercise()
+      ExerciseMock.createPersistentInstance()
         .then((result) => {
           chai.request(server)
             .patch(`/exercises/${result.exercise.id}/comments/${result.comment.id}`)
@@ -772,7 +732,7 @@ describe('Exercise', () => {
         });
     });
     it('should return status code 400 for invalid input data', function (done) {
-      createExercise()
+      ExerciseMock.createPersistentInstance()
         .then((result) => {
           chai.request(server)
             .patch(`/exercises/${result.exercise.id}/comments/${result.comment.id}`)
@@ -789,7 +749,7 @@ describe('Exercise', () => {
 
   describe('DELETE /exercises/:exercise-id/comments/:comment-id', () => {
     it('should delete a comment of an exercise', function (done) {
-      createExercise()
+      ExerciseMock.createPersistentInstance()
         .then((result) => {
           chai.request(server)
             .delete(`/exercises/${result.exercise.id}/comments/${result.comment.id}`)

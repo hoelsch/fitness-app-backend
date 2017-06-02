@@ -6,30 +6,22 @@
 const chai = require('chai');
 const chaiHttp = require('chai-http');
 const server = require('../bin/www');
-const ExerciseType = require('../models').ExerciseType;
-const MockData = require('./mock-data');
+const ExerciseTypeMock = require('./mock-data/mock-data').ExerciseTypeMock;
 
 const should = chai.should();
 
 chai.use(chaiHttp);
 
-/**
- * Creates and stores a new exercise type in db.
- */
-function createExerciseType() {
-  return ExerciseType.create(MockData.exerciseType);
-}
-
 describe('ExerciseType', () => {
   afterEach(function (done) {
-    ExerciseType.destroy({ where: {} })
+    ExerciseTypeMock.deletePersistentInstances()
       .then(() => done())
       .catch(done);
   });
 
   describe('GET /exercise-types', () => {
     it('should list exercise types', function (done) {
-      createExerciseType()
+      ExerciseTypeMock.createPersistentInstance()
         .then((exerciseType) => {
           chai.request(server)
             .get('/exercise-types')
@@ -69,7 +61,7 @@ describe('ExerciseType', () => {
 
   describe('GET /exercise-types/:name', () => {
     it('should get a single exercise type', function (done) {
-      createExerciseType()
+      ExerciseTypeMock.createPersistentInstance()
         .then((exerciseType) => {
           chai.request(server)
             .get(`/exercise-types/${exerciseType.name}`)
@@ -104,9 +96,10 @@ describe('ExerciseType', () => {
 
   describe('POST /exercise-types', () => {
     it('should create an exercise type', function (done) {
+      const exerciseTypeMock = ExerciseTypeMock.getMockData();
       chai.request(server)
         .post('/exercise-types')
-        .send(MockData.exerciseType)
+        .send(exerciseTypeMock)
         .end((err, res) => {
           if (err) done(err);
 
@@ -115,12 +108,12 @@ describe('ExerciseType', () => {
           res.body.should.be.a('object');
 
           res.body.should.have.property('name');
-          res.body.name.should.equal(MockData.exerciseType.name);
+          res.body.name.should.equal(exerciseTypeMock.name);
 
           res.body.should.have.property('createdAt');
           res.body.should.have.property('updatedAt');
 
-          ExerciseType.findById(res.body.name)
+          ExerciseTypeMock.findPersistentInstanceById(res.body.name)
             .then((exerciseType) => {
               should.exist(exerciseType);
               exerciseType.name.should.equal(res.body.name);
@@ -130,7 +123,7 @@ describe('ExerciseType', () => {
         });
     });
     it('should return existing exercise type if new exercise type already exisits', function (done) {
-      createExerciseType()
+      ExerciseTypeMock.createPersistentInstance()
         .then((exerciseType) => {
           chai.request(server)
             .post('/exercise-types')
@@ -167,7 +160,7 @@ describe('ExerciseType', () => {
 
   describe('DELETE /exercise-types/:name', () => {
     it('should delete an exercise type', function (done) {
-      createExerciseType()
+      ExerciseTypeMock.createPersistentInstance()
         .then((exerciseType) => {
           chai.request(server)
             .delete(`/exercise-types/${exerciseType.name}`)
@@ -176,7 +169,7 @@ describe('ExerciseType', () => {
 
               res.should.have.status(204);
 
-              ExerciseType.findById(exerciseType.name)
+              ExerciseTypeMock.findPersistentInstanceById(exerciseType.name)
                 .then((exerciseTypeStoredInDb) => {
                   should.not.exist(exerciseTypeStoredInDb);
 
