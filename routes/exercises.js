@@ -25,7 +25,7 @@ const router = express.Router();
  * @apiSuccess {String} body.createdAt Date of creation.
  * @apiSuccess {String} body.updatedAt Date of last update.
  */
-router.get('/', (req, res) => {
+router.get('/', (req, res, next) => {
   Exercise.findAll({ include: [User, ExerciseType, Set] })
     .then(exercises => res.json(exercises.map(exercise => ({
       id: exercise.id,
@@ -35,7 +35,8 @@ router.get('/', (req, res) => {
       exerciseType: exercise.ExerciseType,
       createdAt: exercise.createdAt,
       updatedAt: exercise.updatedAt,
-    }))));
+    }))))
+    .catch(next);
 });
 
 /**
@@ -299,7 +300,7 @@ router.get('/:id/sets', (req, res, next) => {
         throw new NotFoundError('Exercise not found');
       }
 
-      res.json(exercise.Sets);
+      res.json(exercise.toJSON().Sets);
     })
     .catch(next);
 });
@@ -352,7 +353,7 @@ router.post('/:id/sets', (req, res, next) => {
         })
         .then(() => set);
     })
-      .then(result => res.json(result))
+      .then(result => res.json(result.toJSON()))
       .catch(next);
   }
 });
