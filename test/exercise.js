@@ -167,9 +167,8 @@ describe('Exercise', () => {
               res.body.exerciseType.should.have.property('name');
 
               // refresh user record and check if lifted weight is updated correctly
-              user.reload().then((reloadedUser) => {
-                reloadedUser.totalWeightLifted.should.equal(
-                  set.numReps * set.weight);
+              user.reload().then(() => {
+                user.totalWeightLifted.should.equal(set.numReps * set.weight);
 
                 done();
               });
@@ -293,8 +292,8 @@ describe('Exercise', () => {
               res.should.have.status(204);
 
               result.user.reload()
-                .then((reloadedUser) => {
-                  reloadedUser.totalWeightLifted.should.equal(0);
+                .then(() => {
+                  result.user.totalWeightLifted.should.equal(0);
                   return Exercise.find({ where: { id: result.exercise.id } });
                 })
                 .then((reloadedExercise) => {
@@ -458,14 +457,14 @@ describe('Exercise', () => {
 
               res.should.have.status(204);
 
-              Set.find({ where: { id: result.set.id } })
-                .then((set) => {
-                  should.not.exist(set);
+              Set.findById(result.set.id)
+                .then((resultSet) => {
+                  should.not.exist(resultSet);
                   return result.user.reload();
                 })
-                .then((reloadedUser) => {
-                  should.exist(reloadedUser);
-                  reloadedUser.totalWeightLifted.should.equal(0);
+                .then(() => {
+                  should.exist(result.user);
+                  result.user.totalWeightLifted.should.equal(0);
 
                   done();
                 });
@@ -520,16 +519,14 @@ describe('Exercise', () => {
               const oldWeight = result.set.weight;
 
               result.set.reload()
-                .then((reloadedSet) => {
-                  should.exist(reloadedSet);
-                  reloadedSet.numReps.should.equal(oldNumReps + 1);
-                  reloadedSet.weight.should.equal(oldWeight + 1);
+                .then(() => {
+                  result.set.numReps.should.equal(oldNumReps + 1);
+                  result.set.weight.should.equal(oldWeight + 1);
 
                   return result.user.reload();
                 })
-                .then((reloadedUser) => {
-                  should.exist(reloadedUser);
-                  reloadedUser.totalWeightLifted.should.equal((oldNumReps + 1) * (oldWeight + 1));
+                .then(() => {
+                  result.user.totalWeightLifted.should.equal((oldNumReps + 1) * (oldWeight + 1));
 
                   done();
                 });
