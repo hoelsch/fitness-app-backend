@@ -24,11 +24,12 @@ router.get('/:id', (req, res, next) => {
   User.findById(req.params.id)
     .then((user) => {
       if (!user) {
-        next(new NotFoundError('User not found'));
-      } else {
-        res.json(user);
+        throw new NotFoundError('User not found');
       }
-    });
+
+      res.json(user.toJSON());
+    })
+    .catch(next);
 });
 
 /**
@@ -51,7 +52,9 @@ router.post('/', (req, res, next) => {
   if (error) {
     next(new InvalidRequestBodyError());
   } else {
-    User.create({ name: req.body.name }).then(user => res.json(user));
+    User.create({ name: req.body.name })
+      .then(user => res.json(user.toJSON()))
+      .catch(next);
   }
 });
 
@@ -83,7 +86,7 @@ router.patch('/:id', (req, res, next) => {
 
         return user.update(req.body);
       })
-      .then(user => res.json(user))
+      .then(user => res.json(user.toJSON()))
       .catch(next);
   }
 });
