@@ -21,8 +21,10 @@ const router = express.Router();
  * @apiSuccess {String} body.createdAt Date of creation.
  * @apiSuccess {String} body.updatedAt Date of last update.
  */
-router.get('/', (req, res) => {
-  Group.findAll().then(groups => res.json(groups));
+router.get('/', (req, res, next) => {
+  Group.findAll({ raw: true })
+    .then(groups => res.json(groups))
+    .catch(next);
 });
 
 /**
@@ -39,11 +41,12 @@ router.get('/:id', (req, res, next) => {
   Group.findById(req.params.id)
     .then((group) => {
       if (!group) {
-        next(new NotFoundError('Group not found'));
-      } else {
-        res.json(group);
+        throw new NotFoundError('Group not found');
       }
-    });
+
+      res.json(group.toJSON());
+    })
+    .catch(next);
 });
 
 /**
@@ -66,7 +69,9 @@ router.post('/', (req, res, next) => {
   if (error) {
     next(new InvalidRequestBodyError());
   } else {
-    Group.create(req.body).then(group => res.json(group));
+    Group.create(req.body)
+      .then(group => res.json(group.toJSON()))
+      .catch(next);
   }
 });
 
@@ -98,7 +103,7 @@ router.patch('/:id', (req, res, next) => {
 
         return group.update(req.body);
       })
-      .then(group => res.json(group))
+      .then(group => res.json(group.toJSON()))
       .catch(next);
   }
 });
@@ -140,7 +145,7 @@ router.get('/:id/members', (req, res, next) => (
         throw new NotFoundError('Group not found');
       }
 
-      res.json(group.Users);
+      res.json(group.toJSON().Users);
     })
     .catch(next)
 ));
@@ -246,9 +251,7 @@ router.get('/:id/exercises', (req, res, next) => {
         sets: exercise.Sets,
       })));
     })
-    .catch((err) => {
-      next(err);
-    });
+    .catch(next);
 });
 
 module.exports = router;
